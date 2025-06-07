@@ -163,6 +163,16 @@ function activatePlayerAvatar(playerNumber) {
 }
 
 function startGame() {
+    // Xóa hiệu ứng chiến thắng nếu có
+    cells.forEach(cell => {
+        cell.classList.remove('winning');
+        cell.innerHTML = '';  // Xóa cả icon nếu có
+    });
+    winningMessage.classList.remove('show');
+
+    // Dừng hiệu ứng nhắc nhở của nút bắt đầu
+    startButton.classList.remove('remind');
+
     // Kiểm tra xem người chơi đã nhập tên chưa
     if (!player1NameInput.value.trim() || !player2NameInput.value.trim()) {
         alert('Vui lòng nhập tên cho cả hai người chơi!');
@@ -186,14 +196,19 @@ function startGame() {
         cell.addEventListener('click', handleClick, { once: true });
     });
     updateTurnInfo();
-    winningMessage.classList.remove('show');
     startButton.style.display = 'none';
     restartButton.style.display = 'block';
     activatePlayerAvatar(1); // Kích hoạt animation cho người chơi 1
 }
 
 function handleClick(e) {
-    if (!gameActive) return;
+    if (!gameActive) {
+        // Nếu game chưa bắt đầu, thêm hiệu ứng nhắc nhở cho nút bắt đầu
+        if (startButton.style.display !== 'none') {
+            startButton.classList.add('remind');
+        }
+        return;
+    }
     
     const cell = e.target;
     if (cell.classList.contains('x') || cell.classList.contains('o')) return;
@@ -213,7 +228,10 @@ function handleClick(e) {
 
 function placeMark(cell, currentClass) {
     cell.classList.add(currentClass);
-    cell.textContent = currentClass.toUpperCase();
+    // Chỉ hiển thị X/O khi chưa thắng
+    if (!cell.classList.contains('winning')) {
+        cell.textContent = currentClass.toUpperCase();
+    }
 }
 
 function swapTurns() {
@@ -221,11 +239,106 @@ function swapTurns() {
 }
 
 function checkWin(currentClass) {
-    return WINNING_COMBINATIONS.some(combination => {
-        return combination.every(index => {
-            return cells[index].classList.contains(currentClass);
+    let hasWon = false;
+    let winningCombination = null;
+
+    // Kiểm tra hàng ngang
+    for (let row = 0; row < 10; row++) {
+        for (let col = 0; col <= 5; col++) {
+            let win = true;
+            for (let i = 0; i < 5; i++) {
+                if (!cells[row * 10 + col + i].classList.contains(currentClass)) {
+                    win = false;
+                    break;
+                }
+            }
+            if (win) {
+                hasWon = true;
+                winningCombination = Array.from({length: 5}, (_, i) => row * 10 + col + i);
+                break;
+            }
+        }
+        if (hasWon) break;
+    }
+
+    // Kiểm tra hàng dọc
+    if (!hasWon) {
+        for (let col = 0; col < 10; col++) {
+            for (let row = 0; row <= 5; row++) {
+                let win = true;
+                for (let i = 0; i < 5; i++) {
+                    if (!cells[(row + i) * 10 + col].classList.contains(currentClass)) {
+                        win = false;
+                        break;
+                    }
+                }
+                if (win) {
+                    hasWon = true;
+                    winningCombination = Array.from({length: 5}, (_, i) => (row + i) * 10 + col);
+                    break;
+                }
+            }
+            if (hasWon) break;
+        }
+    }
+
+    // Kiểm tra đường chéo xuống phải
+    if (!hasWon) {
+        for (let row = 0; row <= 5; row++) {
+            for (let col = 0; col <= 5; col++) {
+                let win = true;
+                for (let i = 0; i < 5; i++) {
+                    if (!cells[(row + i) * 10 + col + i].classList.contains(currentClass)) {
+                        win = false;
+                        break;
+                    }
+                }
+                if (win) {
+                    hasWon = true;
+                    winningCombination = Array.from({length: 5}, (_, i) => (row + i) * 10 + col + i);
+                    break;
+                }
+            }
+            if (hasWon) break;
+        }
+    }
+
+    // Kiểm tra đường chéo xuống trái
+    if (!hasWon) {
+        for (let row = 0; row <= 5; row++) {
+            for (let col = 4; col < 10; col++) {
+                let win = true;
+                for (let i = 0; i < 5; i++) {
+                    if (!cells[(row + i) * 10 + col - i].classList.contains(currentClass)) {
+                        win = false;
+                        break;
+                    }
+                }
+                if (win) {
+                    hasWon = true;
+                    winningCombination = Array.from({length: 5}, (_, i) => (row + i) * 10 + col - i);
+                    break;
+                }
+            }
+            if (hasWon) break;
+        }
+    }
+
+    if (hasWon && winningCombination) {
+        // Lấy avatar của người thắng
+        const winnerAvatar = isPlayer1Turn ? 
+            document.querySelector('.player-1 .current-avatar').className.split(' ')[2] :
+            document.querySelector('.player-2 .current-avatar').className.split(' ')[2];
+        
+        // Thay thế X/O bằng avatar trên các ô thắng
+        winningCombination.forEach(index => {
+            const cell = cells[index];
+            cell.classList.add('winning');
+            cell.innerHTML = `<i class="fa-solid ${winnerAvatar}"></i>`;
         });
-    });
+    }
+
+    return hasWon;
 }
 
 function isDraw() {
@@ -240,6 +353,7 @@ function endGame(draw) {
     if (draw) {
         winningText.innerText = 'Hòa rồi! 🤝';
         lastWinner = null;
+        winningMessage.classList.add('show');
     } else {
         const winner = isPlayer1Turn ? getPlayerName(1) : getPlayerName(2);
         const winnerAvatar = isPlayer1Turn ? 
@@ -247,24 +361,27 @@ function endGame(draw) {
             document.querySelector('.player-2 .current-avatar').className.split(' ')[2];
         const congratMessage = getRandomCongratMessage();
             
-        winningText.innerHTML = `
-            <i class="fa-solid ${winnerAvatar} fa-2x"></i><br>
-            ${winner} đã chiến thắng!<br>
-            ${congratMessage}
-        `;
-        
-        // Update scores và lưu người thắng
-        if (isPlayer1Turn) {
-            scores.player1++;
-            score1Element.textContent = scores.player1;
-            lastWinner = 'player1';
-        } else {
-            scores.player2++;
-            score2Element.textContent = scores.player2;
-            lastWinner = 'player2';
-        }
+        // Đợi 3 giây trước khi hiển thị thông báo chiến thắng
+        setTimeout(() => {
+            winningText.innerHTML = `
+                <i class="fa-solid ${winnerAvatar} fa-2x"></i><br>
+                ${winner} đã chiến thắng!<br>
+                ${congratMessage}
+            `;
+            winningMessage.classList.add('show');
+            
+            // Update scores và lưu người thắng
+            if (isPlayer1Turn) {
+                scores.player1++;
+                score1Element.textContent = scores.player1;
+                lastWinner = 'player1';
+            } else {
+                scores.player2++;
+                score2Element.textContent = scores.player2;
+                lastWinner = 'player2';
+            }
+        }, 3000);
     }
-    winningMessage.classList.add('show');
 }
 
 function restartGame() {
