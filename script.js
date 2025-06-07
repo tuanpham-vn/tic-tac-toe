@@ -76,7 +76,7 @@ avatarOptions.forEach(options => {
         icon.addEventListener('click', (e) => {
             const avatar = e.target.dataset.avatar;
             const currentAvatar = options.closest('.avatar-selector').querySelector('.current-avatar');
-            currentAvatar.className = `current-avatar fa-solid ${avatar} fa-8x`;
+            currentAvatar.className = `current-avatar fa-solid ${avatar} fa-6x`;
             options.classList.remove('show');
         });
     });
@@ -137,9 +137,25 @@ function getPlayerName(playerNumber) {
 function updateTurnInfo() {
     const currentPlayerName = isPlayer1Turn ? getPlayerName(1) : getPlayerName(2);
     const symbol = isPlayer1Turn ? 'X' : 'O';
-    turnInfo.textContent = `Lượt của: ${currentPlayerName} (${symbol})`;
+    turnInfo.textContent = `Lượt của ${currentPlayerName} (${symbol})`;
     
-    activatePlayerAvatar(isPlayer1Turn ? 1 : 2);
+    // Cập nhật class current-turn và hiệu ứng lắc lư
+    const player1Element = document.querySelector('.player-1');
+    const player2Element = document.querySelector('.player-2');
+    const player1Avatar = player1Element.querySelector('.current-avatar');
+    const player2Avatar = player2Element.querySelector('.current-avatar');
+    
+    if (isPlayer1Turn) {
+        player1Element.classList.add('current-turn');
+        player2Element.classList.remove('current-turn');
+        player1Avatar.classList.add('active');
+        player2Avatar.classList.remove('active');
+    } else {
+        player1Element.classList.remove('current-turn');
+        player2Element.classList.add('current-turn');
+        player1Avatar.classList.remove('active');
+        player2Avatar.classList.add('active');
+    }
 }
 
 function activatePlayerAvatar(playerNumber) {
@@ -159,7 +175,7 @@ function activatePlayerAvatar(playerNumber) {
     setTimeout(() => {
         player1Avatar.classList.remove('active');
         player2Avatar.classList.remove('active');
-    }, 2000);
+    }, 15000);
 }
 
 function startGame() {
@@ -179,11 +195,11 @@ function startGame() {
         return;
     }
 
-    // Nếu có người thua cuộc, họ sẽ được chơi trước
+    // Nếu có người thua cuộc, họ sẽ được chơi sau
     if (lastWinner === 'player1') {
-        isPlayer1Turn = false;
-    } else if (lastWinner === 'player2') {
         isPlayer1Turn = true;
+    } else if (lastWinner === 'player2') {
+        isPlayer1Turn = false;
     } else {
         isPlayer1Turn = true; // Ván đầu tiên, Player 1 chơi trước
     }
@@ -325,16 +341,11 @@ function checkWin(currentClass) {
     }
 
     if (hasWon && winningCombination) {
-        // Lấy avatar của người thắng
-        const winnerAvatar = isPlayer1Turn ? 
-            document.querySelector('.player-1 .current-avatar').className.split(' ')[2] :
-            document.querySelector('.player-2 .current-avatar').className.split(' ')[2];
-        
-        // Thay thế X/O bằng avatar trên các ô thắng
+        // Thay thế X/O bằng mặt cười trên các ô thắng
         winningCombination.forEach(index => {
             const cell = cells[index];
             cell.classList.add('winning');
-            cell.innerHTML = `<i class="fa-solid ${winnerAvatar}"></i>`;
+            cell.innerHTML = '<i class="fa-solid fa-face-laugh-wink"></i>';
         });
     }
 

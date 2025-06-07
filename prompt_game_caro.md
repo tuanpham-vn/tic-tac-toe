@@ -10,7 +10,7 @@
 ## 2. Giao diện người chơi
 - Layout 3 cột: Thông tin người chơi 1 - Bảng chơi - Thông tin người chơi 2
 - Mỗi người chơi hiển thị:
-  + Avatar động vật (từ Font Awesome)
+  + Avatar động vật (từ Font Awesome) có thể lựa chọn và thay đổi các loài vật đáng yêu
   + Ô nhập tên (có thể chỉnh sửa)
   + Điểm số
   + Ký hiệu đánh (X/O)
@@ -30,27 +30,10 @@
 - Thông báo chiến thắng sau 3 giây với:
   + Avatar người thắng
   + Tên người thắng
-  + Lời chúc mừng ngẫu nhiên (từ danh sách có sẵn)
-
-## 4. Danh sách lời chúc mừng
-```javascript
-const congratMessages = [
-    "🎉 Xuất sắc! Bạn đã chiến thắng một cách đầy thuyết phục!",
-    "🌟 Wow! Đúng là bậc thầy cờ ca-rô!",
-    "🏆 Chiến thắng tuyệt vời! Đối thủ không có cửa!",
-    "👑 Quá đỉnh! Xứng đáng là nhà vô địch!",
-    "🎮 Game hay quá! Thắng đẹp như phim!",
-    "⭐ Đẳng cấp! Không ai cản được bạn!",
-    "🎯 Chính xác từng nước đi! Quá xuất sắc!",
-    "🌈 Tuyệt vời ông mặt trời! Thắng quá xứng đáng!",
-    "💫 Siêu sao cờ ca-rô đây rồi!",
-    "🔥 Quá hot! Đối thủ phải chào thua!",
-    "🎉 Đẹp trai quá! Đối thủ không thể chịu được!",
-    "🔥 Đỉnh nóc kịch trần bay phấp phới!"
-];
+  + Có 10 lời chúc mừng ngẫu nhiên (từ danh sách có sẵn)
 ```
 
-## 5. Responsive Design
+## 4. Responsive Design
 - Desktop: Layout 3 cột với khoảng cách rộng rãi
 - Mobile (iPhone 11 - 414x896):
   + Layout dọc
@@ -58,21 +41,20 @@ const congratMessages = [
   + Ẩn các góc trang trí
   + Tự động co giãn bảng theo màn hình
 
-## 6. Màu sắc chủ đạo
+## 5. Màu sắc chủ đạo
 - Player 1 (X): Màu đỏ (#ff6b6b)
 - Player 2 (O): Màu xanh (#0000ff)
 - Nền: Màu xám nhạt (#f9f7f7)
-- Font: Fredoka
 - Viền bảng: Màu vàng (#ffd868)
 
-## 7. Chi tiết thông báo chiến thắng
+## 6. Chi tiết thông báo chiến thắng
 - Overlay toàn màn hình (rgba(0, 0, 0, .9))
 - Nội dung trong khung (rgba(255, 255, 255, 0.3))
 - Animation fadeIn từ trên xuống
 - Hiển thị: Avatar, tên người thắng, lời chúc mừng
 - Nút "Chơi Tiếp" để bắt đầu ván mới
 
-## 8. Tính năng bổ sung
+## 7. Tính năng bổ sung
 - Click vào avatar để đổi
 - Hiệu ứng nhấp nháy cho nút "Bắt đầu" khi click vào bảng trước khi bắt đầu game
 - Lưu người thắng/thua để xác định người đi trước ở ván tiếp theo
@@ -81,7 +63,7 @@ const congratMessages = [
 ## Yêu cầu kỹ thuật
 - Sử dụng HTML5, CSS3, và JavaScript thuần
 - Font Awesome cho các icon
-- Font Google Fredoka
+- Font game cho trẻ em, ngộ nghĩnh đáng yêu
 - Responsive design
-- Animation mượt mà với transform và transition # tic-tac-toe
-Game for my daughter
+- Animation mượt mà với transform và transition 
+- Có frame với hình trang trí ngộ nghĩnh đáng yêu ở 4 góc của Bảng chơi
