@@ -188,6 +188,7 @@ function startGame(withComputer = false) {
     // Xóa hiệu ứng chiến thắng nếu có
     cells.forEach(cell => {
         cell.classList.remove('winning');
+        cell.classList.remove('last-move');
         cell.innerHTML = '';  // Xóa cả icon nếu có
         cell.classList.remove('x', 'o');
         cell.textContent = '';
@@ -301,11 +302,17 @@ function handleCellClick(cell) {
 }
 
 function placeMark(cell, currentClass) {
+    // Xóa highlight ô đánh cuối cùng trước đó
+    cells.forEach(c => c.classList.remove('last-move'));
+    
     cell.classList.add(currentClass);
     // Chỉ hiển thị X/O khi chưa thắng
     if (!cell.classList.contains('winning')) {
         cell.textContent = currentClass.toUpperCase();
     }
+    
+    // Highlight ô vừa đánh
+    cell.classList.add('last-move');
 }
 
 function swapTurns() {
