@@ -2,6 +2,7 @@ const board = document.getElementById('board');
 const winningMessage = document.getElementById('winning-message');
 const winningText = document.querySelector('.winning-text');
 const startButton = document.getElementById('start-btn');
+const playWithComputerButton = document.getElementById('play-with-computer-btn');
 const restartButton = document.getElementById('restart-btn');
 const playAgainButton = document.getElementById('play-again-btn');
 const score1Element = document.getElementById('score-1');
@@ -9,7 +10,7 @@ const score2Element = document.getElementById('score-2');
 const turnInfo = document.getElementById('turn-info');
 const player1NameInput = document.getElementById('player1Name');
 const player2NameInput = document.getElementById('player2Name');
-const currentAvatars = document.querySelectorAll('.current-avatar');
+const avatarSelectors = document.querySelectorAll('.avatar-selector');
 const avatarOptions = document.querySelectorAll('.avatar-options');
 
 // Tạo bảng 10x10
@@ -30,6 +31,8 @@ let scores = {
 let isPlayer1Turn = true;
 let gameActive = false;
 let lastWinner = null;
+let isComputerMode = false;
+let lastHumanMove = null;
 
 // Mảng các lời chúc mừng
 const congratMessages = [
@@ -52,9 +55,9 @@ function getRandomCongratMessage() {
 }
 
 // Xử lý click vào avatar để đổi
-currentAvatars.forEach(avatar => {
-    avatar.addEventListener('click', (e) => {
-        const options = e.target.closest('.avatar-selector').querySelector('.avatar-options');
+avatarSelectors.forEach(selector => {
+    selector.addEventListener('click', (e) => {
+        const options = selector.querySelector('.avatar-options');
         options.classList.toggle('show');
         
         // Đóng avatar options khi click ra ngoài
@@ -74,6 +77,7 @@ currentAvatars.forEach(avatar => {
 avatarOptions.forEach(options => {
     options.querySelectorAll('i').forEach(icon => {
         icon.addEventListener('click', (e) => {
+            e.stopPropagation(); // Ngăn sự kiện click lan tỏa
             const avatar = e.target.dataset.avatar;
             const currentAvatar = options.closest('.avatar-selector').querySelector('.current-avatar');
             currentAvatar.className = `current-avatar fa-solid ${avatar} fa-6x`;
@@ -178,57 +182,84 @@ function activatePlayerAvatar(playerNumber) {
     }, 15000);
 }
 
-function startGame() {
+function startGame(withComputer = false) {
     // Xóa hiệu ứng chiến thắng nếu có
     cells.forEach(cell => {
         cell.classList.remove('winning');
         cell.innerHTML = '';  // Xóa cả icon nếu có
+        cell.classList.remove('x', 'o');
+        cell.textContent = '';
     });
     winningMessage.classList.remove('show');
 
-    // Dừng hiệu ứng nhắc nhở của nút bắt đầu
+    // Dừng hiệu ứng nhắc nhở của các nút
     startButton.classList.remove('remind');
+    playWithComputerButton.classList.remove('remind');
+
+    // Thiết lập chế độ chơi
+    isComputerMode = withComputer;
+    
+    // Thiết lập tên và avatar cho máy nếu cần
+    if (withComputer) {
+        player1NameInput.value = "Máy";
+        player1NameInput.disabled = true;
+        document.querySelector('.player-1 .current-avatar').className = 'current-avatar fa-solid fa-robot fa-6x';
+        document.querySelector('.player-1 .avatar-selector').style.pointerEvents = 'none';
+    } else {
+        player1NameInput.value = "Méo";
+        player1NameInput.disabled = false;
+        document.querySelector('.player-1 .current-avatar').className = 'current-avatar fa-solid fa-cat fa-6x';
+        document.querySelector('.player-1 .avatar-selector').style.pointerEvents = 'auto';
+    }
 
     // Kiểm tra xem người chơi đã nhập tên chưa
-    if (!player1NameInput.value.trim() || !player2NameInput.value.trim()) {
-        alert('Vui lòng nhập tên cho cả hai người chơi!');
+    if (!player2NameInput.value.trim()) {
+        alert('Vui lòng nhập tên người chơi!');
         return;
     }
 
-    // Nếu có người thua cuộc, họ sẽ được chơi sau
-    if (lastWinner === 'player1') {
-        isPlayer1Turn = true;
-    } else if (lastWinner === 'player2') {
-        isPlayer1Turn = false;
-    } else {
-        isPlayer1Turn = true; // Ván đầu tiên, Player 1 chơi trước
-    }
-    
+    // Reset lại lượt chơi và trạng thái game
+    isPlayer1Turn = true;
+    lastHumanMove = null;
     gameActive = true;
+    
+    // Thêm lại sự kiện click cho các ô
     cells.forEach(cell => {
-        cell.classList.remove('x', 'o');
-        cell.textContent = '';
         cell.removeEventListener('click', handleClick);
         cell.addEventListener('click', handleClick, { once: true });
     });
+
+    // Cập nhật giao diện
     updateTurnInfo();
     startButton.style.display = 'none';
+    playWithComputerButton.style.display = 'none';
     restartButton.style.display = 'block';
-    activatePlayerAvatar(1); // Kích hoạt animation cho người chơi 1
+
+    // Nếu chơi với máy, cho máy đánh trước sau một chút
+    if (withComputer) {
+        setTimeout(computerPlay, 500);
+    }
 }
 
 function handleClick(e) {
     if (!gameActive) {
-        // Nếu game chưa bắt đầu, thêm hiệu ứng nhắc nhở cho nút bắt đầu
         if (startButton.style.display !== 'none') {
             startButton.classList.add('remind');
+            playWithComputerButton.classList.add('remind');
         }
         return;
     }
     
+    // Trong chế độ chơi với máy, chỉ cho phép người chơi đánh khi đến lượt (O)
+    if (isComputerMode && isPlayer1Turn) return;
+    
     const cell = e.target;
     if (cell.classList.contains('x') || cell.classList.contains('o')) return;
     
+    handleCellClick(cell);
+}
+
+function handleCellClick(cell) {
     const currentClass = isPlayer1Turn ? 'x' : 'o';
     placeMark(cell, currentClass);
     
@@ -239,6 +270,16 @@ function handleClick(e) {
     } else {
         swapTurns();
         updateTurnInfo();
+        
+        // Lưu nước đi của người chơi
+        if (isComputerMode && !isPlayer1Turn) {
+            lastHumanMove = cell;
+        }
+        
+        // Nếu đang ở chế độ chơi với máy và đến lượt máy, cho máy đánh
+        if (isComputerMode && isPlayer1Turn) {
+            computerPlay();
+        }
     }
 }
 
@@ -358,6 +399,25 @@ function isDraw() {
     });
 }
 
+// Tạo hiệu ứng confetti
+function createConfetti() {
+    const colors = ['#ff6b6b', '#4d96ff', '#ffd868'];
+    confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: colors,
+        disableForReducedMotion: true
+    });
+}
+
+// Tạo hiệu ứng confetti 3 lần
+function playConfettiEffect() {
+    createConfetti();
+    setTimeout(createConfetti, 500);
+    setTimeout(createConfetti, 1000);
+}
+
 function endGame(draw) {
     gameActive = false;
     
@@ -371,6 +431,9 @@ function endGame(draw) {
             document.querySelector('.player-1 .current-avatar').className.split(' ')[2] :
             document.querySelector('.player-2 .current-avatar').className.split(' ')[2];
         const congratMessage = getRandomCongratMessage();
+            
+        // Phát hiệu ứng confetti khi thắng
+        playConfettiEffect();
             
         // Đợi 3 giây trước khi hiển thị thông báo chiến thắng
         setTimeout(() => {
@@ -396,8 +459,16 @@ function endGame(draw) {
 }
 
 function restartGame() {
-    startGame();
-    activatePlayerAvatar(1); // Kích hoạt animation cho người chơi 1 khi restart
+    startButton.style.display = 'block';
+    playWithComputerButton.style.display = 'block';
+    restartButton.style.display = 'none';
+    gameActive = false;
+    
+    // Reset lại trạng thái của player 1 nếu đang ở chế độ máy
+    if (isComputerMode) {
+        player1NameInput.disabled = false;
+        document.querySelector('.player-1 .avatar-selector').style.pointerEvents = 'auto';
+    }
 }
 
 function playAgain() {
@@ -406,10 +477,211 @@ function playAgain() {
 }
 
 // Thêm sự kiện cho các nút
-startButton.addEventListener('click', startGame);
+startButton.addEventListener('click', () => startGame(false));
+playWithComputerButton.addEventListener('click', () => startGame(true));
 restartButton.addEventListener('click', restartGame);
-playAgainButton.addEventListener('click', playAgain);
+playAgainButton.addEventListener('click', () => {
+    if (isComputerMode) {
+        startGame(true);
+    } else {
+        startGame(false);
+    }
+});
 
 // Thêm sự kiện cho input name
 player1NameInput.addEventListener('input', updateTurnInfo);
-player2NameInput.addEventListener('input', updateTurnInfo); 
+player2NameInput.addEventListener('input', updateTurnInfo);
+
+// Hàm kiểm tra xem có 4 quân liên tiếp không
+function checkFourInARow(currentClass) {
+    // Kiểm tra hàng ngang
+    for (let row = 0; row < 10; row++) {
+        for (let col = 0; col <= 5; col++) {
+            let count = 0;
+            let emptyCell = null;
+            for (let i = 0; i < 5; i++) {
+                const index = row * 10 + col + i;
+                if (index >= 100) continue; // Bỏ qua nếu index vượt quá bảng
+                const cell = cells[index];
+                if (!cell) continue; // Bỏ qua nếu cell không tồn tại
+                if (cell.classList.contains(currentClass)) {
+                    count++;
+                } else if (!cell.classList.contains('x') && !cell.classList.contains('o')) {
+                    emptyCell = cell;
+                }
+            }
+            if (count === 4 && emptyCell) {
+                return emptyCell;
+            }
+        }
+    }
+
+    // Kiểm tra hàng dọc
+    for (let col = 0; col < 10; col++) {
+        for (let row = 0; row <= 5; row++) {
+            let count = 0;
+            let emptyCell = null;
+            for (let i = 0; i < 5; i++) {
+                const index = (row + i) * 10 + col;
+                if (index >= 100) continue; // Bỏ qua nếu index vượt quá bảng
+                const cell = cells[index];
+                if (!cell) continue; // Bỏ qua nếu cell không tồn tại
+                if (cell.classList.contains(currentClass)) {
+                    count++;
+                } else if (!cell.classList.contains('x') && !cell.classList.contains('o')) {
+                    emptyCell = cell;
+                }
+            }
+            if (count === 4 && emptyCell) {
+                return emptyCell;
+            }
+        }
+    }
+
+    // Kiểm tra đường chéo xuống phải
+    for (let row = 0; row <= 5; row++) {
+        for (let col = 0; col <= 5; col++) {
+            let count = 0;
+            let emptyCell = null;
+            for (let i = 0; i < 5; i++) {
+                const index = (row + i) * 10 + col + i;
+                if (index >= 100) continue; // Bỏ qua nếu index vượt quá bảng
+                const cell = cells[index];
+                if (!cell) continue; // Bỏ qua nếu cell không tồn tại
+                if (cell.classList.contains(currentClass)) {
+                    count++;
+                } else if (!cell.classList.contains('x') && !cell.classList.contains('o')) {
+                    emptyCell = cell;
+                }
+            }
+            if (count === 4 && emptyCell) {
+                return emptyCell;
+            }
+        }
+    }
+
+    // Kiểm tra đường chéo xuống trái
+    for (let row = 0; row <= 5; row++) {
+        for (let col = 4; col < 10; col++) {
+            let count = 0;
+            let emptyCell = null;
+            for (let i = 0; i < 5; i++) {
+                const index = (row + i) * 10 + col - i;
+                if (index >= 100) continue; // Bỏ qua nếu index vượt quá bảng
+                const cell = cells[index];
+                if (!cell) continue; // Bỏ qua nếu cell không tồn tại
+                if (cell.classList.contains(currentClass)) {
+                    count++;
+                } else if (!cell.classList.contains('x') && !cell.classList.contains('o')) {
+                    emptyCell = cell;
+                }
+            }
+            if (count === 4 && emptyCell) {
+                return emptyCell;
+            }
+        }
+    }
+
+    return null;
+}
+
+// Hàm lấy các ô trống xung quanh một ô
+function getAdjacentEmptyCells(cellIndex) {
+    const row = Math.floor(cellIndex / 10);
+    const col = cellIndex % 10;
+    const emptyCells = [];
+
+    for (let i = -1; i <= 1; i++) {
+        for (let j = -1; j <= 1; j++) {
+            const newRow = row + i;
+            const newCol = col + j;
+            if (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 10) {
+                const index = newRow * 10 + newCol;
+                const cell = cells[index];
+                if (!cell.classList.contains('x') && !cell.classList.contains('o')) {
+                    emptyCells.push(cell);
+                }
+            }
+        }
+    }
+
+    return emptyCells;
+}
+
+// Hàm lấy một ô ngẫu nhiên từ danh sách
+function getRandomCell(cellList) {
+    return cellList[Math.floor(Math.random() * cellList.length)];
+}
+
+// Hàm lấy tất cả các ô trống
+function getAllEmptyCells() {
+    return [...cells].filter(cell => 
+        !cell.classList.contains('x') && !cell.classList.contains('o')
+    );
+}
+
+// Hàm lấy các ô trung tâm còn trống
+function getCenterCells() {
+    const centerCells = [];
+    // Lấy 9 ô ở giữa bảng (từ hàng 4-6, cột 4-6)
+    for (let row = 4; row <= 6; row++) {
+        for (let col = 4; col <= 6; col++) {
+            const index = row * 10 + col;
+            const cell = cells[index];
+            if (!cell.classList.contains('x') && !cell.classList.contains('o')) {
+                centerCells.push(cell);
+            }
+        }
+    }
+    return centerCells;
+}
+
+// Hàm cho máy đánh
+function computerPlay() {
+    if (!gameActive || !isComputerMode || !isPlayer1Turn) return;
+
+    setTimeout(() => {
+        let cellToPlay;
+
+        // Nếu là nước đi đầu tiên, chọn một ô ở giữa
+        const emptyCells = getAllEmptyCells();
+        if (emptyCells.length === 100) { // Bảng còn trống hoàn toàn
+            const centerCells = getCenterCells();
+            if (centerCells.length > 0) {
+                cellToPlay = getRandomCell(centerCells);
+                handleCellClick(cellToPlay);
+                return;
+            }
+        }
+
+        // Kiểm tra nếu máy có thể thắng
+        cellToPlay = checkFourInARow('x');
+        if (cellToPlay) {
+            handleCellClick(cellToPlay);
+            return;
+        }
+
+        // Kiểm tra nếu cần chặn người chơi
+        cellToPlay = checkFourInARow('o');
+        if (cellToPlay) {
+            handleCellClick(cellToPlay);
+            return;
+        }
+
+        // Nếu có nước đi gần nhất của người chơi, đánh gần đó
+        if (lastHumanMove !== null) {
+            const adjacentCells = getAdjacentEmptyCells(parseInt(lastHumanMove.dataset.index));
+            if (adjacentCells.length > 0) {
+                cellToPlay = getRandomCell(adjacentCells);
+                handleCellClick(cellToPlay);
+                return;
+            }
+        }
+
+        // Nếu không có lựa chọn nào, đánh ngẫu nhiên
+        if (emptyCells.length > 0) {
+            cellToPlay = getRandomCell(emptyCells);
+            handleCellClick(cellToPlay);
+        }
+    }, 500); // Đợi 0.5 giây trước khi máy đánh
+} 

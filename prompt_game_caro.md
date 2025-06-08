@@ -5,7 +5,7 @@
 - Điều kiện thắng: 5 ô liên tiếp (ngang, dọc hoặc chéo)
 - Hai người chơi lần lượt đánh X và O
 - Tên mặc định: "Méo" (X) và "Cù" (O)
-- Người thua được đánh trước ở ván tiếp theo
+- Người thắng được đánh trước ở ván tiếp theo
 
 ## 2. Giao diện người chơi
 - Layout 3 cột: Thông tin người chơi 1 - Bảng chơi - Thông tin người chơi 2
@@ -35,7 +35,7 @@
 
 ## 4. Responsive Design
 - Desktop: Layout 3 cột với khoảng cách rộng rãi
-- Mobile (iPhone 11 - 414x896):
+- Mobile (414x896):
   + Layout dọc
   + Font size và padding nhỏ hơn
   + Ẩn các góc trang trí
@@ -55,7 +55,7 @@
 - Nút "Chơi Tiếp" để bắt đầu ván mới
 
 ## 7. Tính năng bổ sung
-- Click vào avatar để đổi
+- Click vào avatar để đổi avatar từ danh sách các loài thú đáng yêu
 - Hiệu ứng nhấp nháy cho nút "Bắt đầu" khi click vào bảng trước khi bắt đầu game
 - Lưu người thắng/thua để xác định người đi trước ở ván tiếp theo
 - Tự động cập nhật và hiển thị điểm số
@@ -63,7 +63,8 @@
 ## Yêu cầu kỹ thuật
 - Sử dụng HTML5, CSS3, và JavaScript thuần
 - Font Awesome cho các icon
-- Font game cho trẻ em, ngộ nghĩnh đáng yêu
+- Font chữ game cho trẻ em, ngộ nghĩnh đáng yêu
 - Responsive design
 - Animation mượt mà với transform và transition 
 - Có frame với hình trang trí ngộ nghĩnh đáng yêu ở 4 góc của Bảng chơi
+- Bố cục chung cân đối, chuyên nghiệp
