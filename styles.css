@@ -589,6 +589,30 @@ h1 {
     }
 }
 
+.thinking-indicator {
+    display: none;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+    opacity: 0.25;
+}
+
+.thinking-indicator.show {
+    display: block;
+}
+
+.thinking-indicator i {
+    font-size: 6rem;
+    color: #6c5ce7;
+}
+
+.thinking-text {
+    font-size: 1.2rem;
+    color: #333;
+}
+
 /* Media query cho iPhone 11 */
 @media screen and (max-width: 414px) {
     .game-container {
@@ -695,6 +719,14 @@ h1 {
     .cell.winning i {
         font-size: 1.0em;
     }
+
+    .thinking-indicator i {
+        font-size: 4rem;
+    }
+
+    .thinking-text {
+        font-size: 1rem;
+    }
 }
 
 /* Đảm bảo desktop vẫn hiển thị tốt */
@@ -781,5 +813,13 @@ h1 {
 
     .cell.winning i {
         font-size: 0.7em !important;
+    }
+
+    .thinking-indicator i {
+        font-size: 2rem;
+    }
+
+    .thinking-text {
+        font-size: 1rem;
     }
 } 

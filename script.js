@@ -12,6 +12,7 @@ const player1NameInput = document.getElementById('player1Name');
 const player2NameInput = document.getElementById('player2Name');
 const avatarSelectors = document.querySelectorAll('.avatar-selector');
 const avatarOptions = document.querySelectorAll('.avatar-options');
+const thinkingIndicator = document.getElementById('thinking-indicator');
 
 // Tạo bảng 10x10
 for (let i = 0; i < 100; i++) {
@@ -33,6 +34,7 @@ let gameActive = false;
 let lastWinner = null;
 let isComputerMode = false;
 let lastHumanMove = null;
+let isFirstGame = true; // Thêm biến để theo dõi trận đầu tiên
 
 // Mảng các lời chúc mừng
 const congratMessages = [
@@ -218,8 +220,23 @@ function startGame(withComputer = false) {
         return;
     }
 
-    // Reset lại lượt chơi và trạng thái game
-    isPlayer1Turn = true;
+    // Xác định người đi trước
+    if (isFirstGame) {
+        // Trận đầu tiên, máy luôn đi trước trong chế độ chơi với máy
+        isPlayer1Turn = withComputer;  // true nếu là máy, false nếu là người chơi
+    } else {
+        // Từ trận thứ 2, người thắng được đi trước
+        if (lastWinner === 'player1') {
+            isPlayer1Turn = true; // Máy thắng, máy đi trước
+        } else if (lastWinner === 'player2') {
+            isPlayer1Turn = false; // Người chơi thắng, người chơi đi trước
+        } else {
+            // Nếu hòa, người chơi 1 đi trước
+            isPlayer1Turn = true;
+        }
+    }
+
+    // Reset lại trạng thái game
     lastHumanMove = null;
     gameActive = true;
     
@@ -235,9 +252,9 @@ function startGame(withComputer = false) {
     playWithComputerButton.style.display = 'none';
     restartButton.style.display = 'block';
 
-    // Nếu chơi với máy, cho máy đánh trước sau một chút
-    if (withComputer) {
-        setTimeout(computerPlay, 500);
+    // Nếu chơi với máy và đến lượt máy, cho máy đánh
+    if (withComputer && isPlayer1Turn) {
+        setTimeout(computerPlay, isFirstGame ? 0 : 500);
     }
 }
 
@@ -448,11 +465,11 @@ function endGame(draw) {
             if (isPlayer1Turn) {
                 scores.player1++;
                 score1Element.textContent = scores.player1;
-                lastWinner = 'player1';
+                lastWinner = 'player1'; // Máy thắng
             } else {
                 scores.player2++;
                 score2Element.textContent = scores.player2;
-                lastWinner = 'player2';
+                lastWinner = 'player2'; // Người chơi thắng
             }
         }, 3000);
     }
@@ -463,6 +480,7 @@ function restartGame() {
     playWithComputerButton.style.display = 'block';
     restartButton.style.display = 'none';
     gameActive = false;
+    isFirstGame = true; // Reset lại trận đầu tiên
     
     // Reset lại trạng thái của player 1 nếu đang ở chế độ máy
     if (isComputerMode) {
@@ -472,21 +490,15 @@ function restartGame() {
 }
 
 function playAgain() {
-    startGame();
-    activatePlayerAvatar(isPlayer1Turn ? 1 : 2); // Kích hoạt animation cho người chơi tiếp theo
+    isFirstGame = false; // Đánh dấu không phải trận đầu tiên
+    startGame(isComputerMode); // Sử dụng trạng thái hiện tại của isComputerMode
 }
 
 // Thêm sự kiện cho các nút
 startButton.addEventListener('click', () => startGame(false));
 playWithComputerButton.addEventListener('click', () => startGame(true));
 restartButton.addEventListener('click', restartGame);
-playAgainButton.addEventListener('click', () => {
-    if (isComputerMode) {
-        startGame(true);
-    } else {
-        startGame(false);
-    }
-});
+playAgainButton.addEventListener('click', playAgain);
 
 // Thêm sự kiện cho input name
 player1NameInput.addEventListener('input', updateTurnInfo);
@@ -636,52 +648,150 @@ function getCenterCells() {
     return centerCells;
 }
 
-// Hàm cho máy đánh
+// Hàm hiển thị thinking indicator
+function showThinkingIndicator() {
+    thinkingIndicator.classList.add('show');
+}
+
+// Hàm ẩn thinking indicator
+function hideThinkingIndicator() {
+    thinkingIndicator.classList.remove('show');
+}
+
+// Hàm lấy thời gian suy nghĩ ngẫu nhiên (2, 4, 6, 8 giây)
+function getRandomThinkingTime() {
+    const times = [500, 1000, 1500, 2000, 2500, 3000];
+    return times[Math.floor(Math.random() * times.length)];
+}
+
+// Hàm đánh giá điểm cho một vị trí
+function evaluatePosition(index, currentClass) {
+    const row = Math.floor(index / 10);
+    const col = index % 10;
+    let score = 0;
+
+    // Kiểm tra 8 hướng
+    const directions = [
+        [-1, -1], [-1, 0], [-1, 1], // Trên trái, trên, trên phải
+        [0, -1], [0, 1],           // Trái, phải
+        [1, -1], [1, 0], [1, 1]    // Dưới trái, dưới, dưới phải
+    ];
+
+    for (const [dx, dy] of directions) {
+        let count = 0;
+        let blocked = 0;
+        let space = 0;
+
+        // Kiểm tra 4 ô liên tiếp theo mỗi hướng
+        for (let step = 1; step <= 4; step++) {
+            const newRow = row + dx * step;
+            const newCol = col + dy * step;
+            
+            if (newRow < 0 || newRow >= 10 || newCol < 0 || newCol >= 10) {
+                blocked++;
+                break;
+            }
+
+            const cell = cells[newRow * 10 + newCol];
+            if (cell.classList.contains(currentClass)) {
+                count++;
+            } else if (!cell.classList.contains('x') && !cell.classList.contains('o')) {
+                space++;
+            } else {
+                blocked++;
+                break;
+            }
+        }
+
+        // Tính điểm dựa trên số quân liên tiếp và không gian
+        if (count === 3 && space === 1 && blocked === 0) score += 1000;  // Cơ hội thắng
+        else if (count === 2 && space === 2 && blocked === 0) score += 100;  // Tiềm năng tốt
+        else if (count === 1 && space === 3 && blocked === 0) score += 10;   // Tiềm năng trung bình
+    }
+
+    // Thêm điểm cho vị trí chiến lược
+    if ((row === 4 || row === 5) && (col === 4 || col === 5)) score += 5;  // Trung tâm
+    if (row >= 2 && row <= 7 && col >= 2 && col <= 7) score += 2;          // Khu vực giữa
+
+    return score;
+}
+
+// Hàm tìm nước đi tốt nhất cho máy
+function findBestMove() {
+    const emptyCells = getAllEmptyCells();
+    let bestScore = -1;
+    let bestCell = null;
+
+    // Kiểm tra nước thắng ngay
+    const winningMove = checkFourInARow('x');
+    if (winningMove) return winningMove;
+
+    // Kiểm tra nước chặn thắng của đối thủ
+    const blockingMove = checkFourInARow('o');
+    if (blockingMove) return blockingMove;
+
+    // Đánh giá tất cả các ô trống
+    for (const cell of emptyCells) {
+        const index = parseInt(cell.dataset.index);
+        
+        // Tính điểm tấn công (cho X)
+        let attackScore = evaluatePosition(index, 'x');
+        
+        // Tính điểm phòng thủ (cho O)
+        let defenseScore = evaluatePosition(index, 'o');
+        
+        // Kết hợp điểm với trọng số
+        let totalScore = attackScore * 1.2 + defenseScore;
+
+        // Cập nhật nước đi tốt nhất
+        if (totalScore > bestScore) {
+            bestScore = totalScore;
+            bestCell = cell;
+        }
+    }
+
+    // Nếu không tìm được nước đi tốt, chọn ngẫu nhiên từ các ô trung tâm
+    if (!bestCell || bestScore === 0) {
+        const centerCells = getCenterCells();
+        if (centerCells.length > 0) {
+            return getRandomCell(centerCells);
+        }
+        return getRandomCell(emptyCells);
+    }
+
+    return bestCell;
+}
+
+// Cập nhật hàm computerPlay
 function computerPlay() {
     if (!gameActive || !isComputerMode || !isPlayer1Turn) return;
 
+    // Kiểm tra xem có phải lượt đầu tiên không
+    const emptyCells = getAllEmptyCells();
+    const isFirstMove = emptyCells.length === 100;
+
+    if (!isFirstMove) {
+        showThinkingIndicator();
+    }
+
     setTimeout(() => {
+        if (!isFirstMove) {
+            hideThinkingIndicator();
+        }
+
         let cellToPlay;
 
         // Nếu là nước đi đầu tiên, chọn một ô ở giữa
-        const emptyCells = getAllEmptyCells();
-        if (emptyCells.length === 100) { // Bảng còn trống hoàn toàn
+        if (isFirstMove) {
             const centerCells = getCenterCells();
-            if (centerCells.length > 0) {
-                cellToPlay = getRandomCell(centerCells);
-                handleCellClick(cellToPlay);
-                return;
-            }
+            cellToPlay = getRandomCell(centerCells);
+        } else {
+            // Sử dụng thuật toán mới để tìm nước đi tốt nhất
+            cellToPlay = findBestMove();
         }
 
-        // Kiểm tra nếu máy có thể thắng
-        cellToPlay = checkFourInARow('x');
         if (cellToPlay) {
             handleCellClick(cellToPlay);
-            return;
         }
-
-        // Kiểm tra nếu cần chặn người chơi
-        cellToPlay = checkFourInARow('o');
-        if (cellToPlay) {
-            handleCellClick(cellToPlay);
-            return;
-        }
-
-        // Nếu có nước đi gần nhất của người chơi, đánh gần đó
-        if (lastHumanMove !== null) {
-            const adjacentCells = getAdjacentEmptyCells(parseInt(lastHumanMove.dataset.index));
-            if (adjacentCells.length > 0) {
-                cellToPlay = getRandomCell(adjacentCells);
-                handleCellClick(cellToPlay);
-                return;
-            }
-        }
-
-        // Nếu không có lựa chọn nào, đánh ngẫu nhiên
-        if (emptyCells.length > 0) {
-            cellToPlay = getRandomCell(emptyCells);
-            handleCellClick(cellToPlay);
-        }
-    }, 500); // Đợi 0.5 giây trước khi máy đánh
+    }, isFirstMove ? 0 : getRandomThinkingTime());
 } 
