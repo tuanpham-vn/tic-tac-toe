@@ -14,15 +14,37 @@ const avatarSelectors = document.querySelectorAll('.avatar-selector');
 const avatarOptions = document.querySelectorAll('.avatar-options');
 const thinkingIndicator = document.getElementById('thinking-indicator');
 
-// Tạo bảng 10x10
-for (let i = 0; i < 100; i++) {
-    const cell = document.createElement('div');
-    cell.classList.add('cell');
-    cell.setAttribute('data-index', i);
-    board.appendChild(cell);
-}
+// Thêm biến âm thanh ở đầu file
 
-const cells = document.querySelectorAll('.cell');
+const winSounds = [
+    new Audio('sounds/thắng rồi yahoo.mp3'),
+    new Audio('sounds/thắng rồi nha.mp3'),
+    new Audio('sounds/nanana.mp3'),
+    new Audio('sounds/đùa với ninja rùa à.mp3'),
+    new Audio('sounds/đánh thế không thắng được đâu bạn ơi.mp3')
+];
+
+const loseSounds = [
+    new Audio('sounds/buồn như con chuồn chuồn.mp3'),
+    new Audio('sounds/chán như con gián luôn.mp3'),
+    new Audio('sounds/chán thế nhờ 2.mp3'),
+    new Audio('sounds/chán thế nhờ.mp3'),
+    new Audio('sounds/thua mất rồi trời ơi.mp3')
+];
+
+const moveSounds = [
+    new Audio('sounds/đánh này.mp3'),
+    new Audio('sounds/đánh này_2.mp3'),
+    new Audio('sounds/đánh vào chỗ này.mp3'),
+    new Audio('sounds/đánh đê bạn ơi.mp3'),
+    new Audio('sounds/đỡ vào mắt nhé.mp3'),
+    new Audio('sounds/chơi hết mình đi bạn ơi.mp3'),
+    new Audio('sounds/đánh này.mp3'),
+    new Audio('sounds/đánh này_2.mp3'),
+    new Audio('sounds/đến lượt bạn rồi.mp3'),
+    new Audio('sounds/đến lượt bạn rồi_2.mp3'),
+    new Audio('sounds/đố bạn thắng được tôi đấy.mp3')
+];
 
 let scores = {
     player1: 0,
@@ -35,10 +57,15 @@ let lastWinner = null;
 let isComputerMode = false;
 let lastHumanMove = null;
 let isFirstGame = true; // Thêm biến để theo dõi trận đầu tiên
+let cells; // Thêm biến cells ở scope toàn cục
+
+// Thêm biến để lưu trạng thái âm thanh
+let isSoundEnabled = localStorage.getItem('isSoundEnabled') !== 'false'; // Mặc định là true nếu chưa có trong storage
+let computerDifficulty = localStorage.getItem('computerDifficulty') || '5'; // Mặc định là 5 tuổi
 
 // Mảng các lời chúc mừng
 const congratMessages = [
-    "🎉 Xuất sắc! Bạn đã chiến thắng một cách đầy thuyết phục!",
+    "🎉 Xuất sắc! Bạn đã chiến thắng đầy thuyết phục!",
     "🌟 Wow! Đúng là bậc thầy cờ ca-rô!",
     "🏆 Chiến thắng tuyệt vời! Đối thủ không có cửa!",
     "👑 Quá đỉnh! Xứng đáng là nhà vô địch!",
@@ -47,7 +74,8 @@ const congratMessages = [
     "🎯 Chính xác từng nước đi! Quá xuất sắc!",
     "🌈 Tuyệt vời ông mặt trời! Thắng quá xứng đáng!",
     "💫 Siêu sao cờ ca-rô đây rồi!",
-    "🔥 Quá hot! Đối thủ phải chào thua!"
+    "🔥 Quá hot! Đối thủ phải chào thua!",
+    "🌈 Tuyệt vời ông mặt trời!",
 ];
 
 // Hàm lấy ngẫu nhiên lời chúc mừng
@@ -253,6 +281,14 @@ function startGame(withComputer = false) {
     playWithComputerButton.style.display = 'none';
     restartButton.style.display = 'block';
 
+    // Hiển thị/ẩn các controls khi chơi với máy
+    const difficultyControl = document.querySelector('.difficulty-select');
+    const soundControl = document.querySelector('.sound-checkbox');
+    if (difficultyControl && soundControl) {
+        difficultyControl.style.display = withComputer ? 'flex' : 'none';
+        soundControl.style.display = withComputer ? 'flex' : 'none';
+    }
+
     // Nếu chơi với máy và đến lượt máy, cho máy đánh
     if (withComputer && isPlayer1Turn) {
         setTimeout(computerPlay, isFirstGame ? 0 : 500);
@@ -456,10 +492,16 @@ function endGame(draw) {
             document.querySelector('.player-2 .current-avatar').className.split(' ')[2];
         const congratMessage = getRandomCongratMessage();
             
-        // Phát hiệu ứng confetti khi thắng
+        // Phát hiệu ứng confetti và âm thanh khi thắng/thua
         playConfettiEffect();
+        if (isComputerMode) {
+            if (isPlayer1Turn) {
+                playWinSound(); // Máy thắng
+            } else {
+                playLoseSound(); // Máy thua
+            }
+        }
             
-        // Đợi 3 giây trước khi hiển thị thông báo chiến thắng
         setTimeout(() => {
             winningText.innerHTML = `
                 <i class="fa-solid ${winnerAvatar} fa-2x"></i><br>
@@ -468,15 +510,14 @@ function endGame(draw) {
             `;
             winningMessage.classList.add('show');
             
-            // Update scores và lưu người thắng
             if (isPlayer1Turn) {
                 scores.player1++;
                 score1Element.textContent = scores.player1;
-                lastWinner = 'player1'; // Máy thắng
+                lastWinner = 'player1';
             } else {
                 scores.player2++;
                 score2Element.textContent = scores.player2;
-                lastWinner = 'player2'; // Người chơi thắng
+                lastWinner = 'player2';
             }
         }, 3000);
     }
@@ -489,11 +530,44 @@ function restartGame() {
     gameActive = false;
     isFirstGame = true; // Reset lại trận đầu tiên
     
+    // Ẩn các controls
+    const difficultyControl = document.querySelector('.difficulty-select');
+    const soundControl = document.querySelector('.sound-checkbox');
+    if (difficultyControl && soundControl) {
+        difficultyControl.style.display = 'none';
+        soundControl.style.display = 'none';
+    }
+    
     // Reset lại trạng thái của player 1 nếu đang ở chế độ máy
     if (isComputerMode) {
         player1NameInput.disabled = false;
         document.querySelector('.player-1 .avatar-selector').style.pointerEvents = 'auto';
     }
+
+    // Reset lại tất cả các ô
+    cells.forEach(cell => {
+        cell.classList.remove('x', 'o', 'winning', 'last-move');
+        cell.textContent = '';
+        cell.innerHTML = '';
+    });
+
+    // Ẩn winning message nếu đang hiển thị
+    winningMessage.classList.remove('show');
+
+    // Reset lại thông tin lượt chơi
+    turnInfo.textContent = 'Lượt của: Méo (X)';
+    isPlayer1Turn = true;
+
+    // Reset lại trạng thái người chơi
+    const player1Element = document.querySelector('.player-1');
+    const player2Element = document.querySelector('.player-2');
+    const player1Avatar = player1Element.querySelector('.current-avatar');
+    const player2Avatar = player2Element.querySelector('.current-avatar');
+    
+    player1Element.classList.add('current-turn');
+    player2Element.classList.remove('current-turn');
+    player1Avatar.classList.remove('active');
+    player2Avatar.classList.remove('active');
 }
 
 function playAgain() {
@@ -723,7 +797,7 @@ function evaluatePosition(index, currentClass) {
     return score;
 }
 
-// Hàm tìm nước đi tốt nhất cho máy
+// Cập nhật hàm findBestMove để xử lý theo độ khó
 function findBestMove() {
     const emptyCells = getAllEmptyCells();
     let bestScore = -1;
@@ -737,6 +811,11 @@ function findBestMove() {
     const blockingMove = checkFourInARow('o');
     if (blockingMove) return blockingMove;
 
+    // Nếu là độ khó 5 tuổi, đôi khi bỏ qua nước đi tốt nhất
+    if (computerDifficulty === '5' && Math.random() < 0.4) {
+        return getRandomCell(emptyCells);
+    }
+
     // Đánh giá tất cả các ô trống
     for (const cell of emptyCells) {
         const index = parseInt(cell.dataset.index);
@@ -747,8 +826,15 @@ function findBestMove() {
         // Tính điểm phòng thủ (cho O)
         let defenseScore = evaluatePosition(index, 'o');
         
-        // Kết hợp điểm với trọng số
-        let totalScore = attackScore * 1.2 + defenseScore;
+        // Điều chỉnh trọng số theo độ khó
+        let totalScore;
+        if (computerDifficulty === '5') {
+            // 5 tuổi: Ưu tiên phòng thủ hơn tấn công
+            totalScore = attackScore * 0.8 + defenseScore * 1.2;
+        } else {
+            // 8 tuổi: Cân bằng giữa tấn công và phòng thủ, thiên về tấn công
+            totalScore = attackScore * 1.2 + defenseScore;
+        }
 
         // Cập nhật nước đi tốt nhất
         if (totalScore > bestScore) {
@@ -769,11 +855,35 @@ function findBestMove() {
     return bestCell;
 }
 
+// Hàm phát âm thanh chiến thắng
+function playWinSound() {
+    const randomSound = winSounds[Math.floor(Math.random() * winSounds.length)];
+    randomSound.currentTime = 0;
+    randomSound.volume = 0.5;
+    randomSound.play();
+}
+
+// Hàm phát âm thanh thua cuộc
+function playLoseSound() {
+    const randomSound = loseSounds[Math.floor(Math.random() * loseSounds.length)];
+    randomSound.currentTime = 0;
+    randomSound.volume = 0.5;
+    randomSound.play();
+}
+
+// Hàm phát âm thanh di chuyển
+function playMoveSound() {
+    if (!gameActive) return; // Không phát âm thanh nếu game đã kết thúc
+    const randomSound = moveSounds[Math.floor(Math.random() * moveSounds.length)];
+    randomSound.currentTime = 0;
+    randomSound.volume = 0.5;
+    randomSound.play();
+}
+
 // Cập nhật hàm computerPlay
 function computerPlay() {
     if (!gameActive || !isComputerMode || !isPlayer1Turn) return;
 
-    // Kiểm tra xem có phải lượt đầu tiên không
     const emptyCells = getAllEmptyCells();
     const isFirstMove = emptyCells.length === 100;
 
@@ -788,17 +898,158 @@ function computerPlay() {
 
         let cellToPlay;
 
-        // Nếu là nước đi đầu tiên, chọn một ô ở giữa
         if (isFirstMove) {
             const centerCells = getCenterCells();
             cellToPlay = getRandomCell(centerCells);
         } else {
-            // Sử dụng thuật toán mới để tìm nước đi tốt nhất
             cellToPlay = findBestMove();
         }
 
         if (cellToPlay) {
+            // Kiểm tra xem nước đi này có phải là nước thắng không
+            const willWin = checkWinningMove(cellToPlay, 'x');
+            
+            // Chỉ phát âm thanh di chuyển nếu không phải nước thắng
+            if (!willWin) {
+                playMoveSound();
+            }
+            
             handleCellClick(cellToPlay);
         }
     }, isFirstMove ? 0 : getRandomThinkingTime());
+}
+
+// Thêm hàm kiểm tra nước đi thắng
+function checkWinningMove(cell, symbol) {
+    // Lưu trạng thái hiện tại của ô
+    const originalClass = cell.className;
+    
+    // Thử đánh vào ô đó
+    cell.classList.add(symbol);
+    
+    // Kiểm tra xem có thắng không
+    const isWinning = checkWin(symbol);
+    
+    // Khôi phục trạng thái của ô
+    cell.className = originalClass;
+    
+    return isWinning;
+}
+
+// Thêm hàm để load trước âm thanh
+function preloadSounds() {
+    [...winSounds, ...loseSounds, ...moveSounds].forEach(sound => {
+        sound.load();
+        sound.preload = 'auto';
+    });
+}
+
+// Khởi tạo khi trang được load
+document.addEventListener('DOMContentLoaded', () => {
+    initializeBoard();
+    preloadSounds();
+});
+
+function initializeBoard() {
+    // Tạo bảng 10x10
+    for (let i = 0; i < 100; i++) {
+        const cell = document.createElement('div');
+        cell.classList.add('cell');
+        cell.setAttribute('data-index', i);
+        board.appendChild(cell);
+    }
+
+    cells = document.querySelectorAll('.cell');
+
+    // Thêm listbox độ khó và checkbox âm thanh vào button-container
+    const buttonContainer = document.querySelector('.button-container');
+    if (buttonContainer) {
+        // Thêm listbox độ khó (bên trái)
+        const difficultyControl = document.createElement('div');
+        difficultyControl.className = 'difficulty-select control-item';
+        difficultyControl.style.display = 'none'; // Ẩn mặc định
+        difficultyControl.innerHTML = `
+            <label for="difficulty">Máy:</label>
+            <select id="difficulty">
+                <option value="5" ${computerDifficulty === '5' ? 'selected' : ''}>5 tuổi</option>
+                <option value="8" ${computerDifficulty === '8' ? 'selected' : ''}>8 tuổi</option>
+            </select>
+        `;
+        buttonContainer.appendChild(difficultyControl);
+
+        // Thêm checkbox âm thanh (bên phải)
+        const soundControl = document.createElement('div');
+        soundControl.className = 'sound-checkbox control-item';
+        soundControl.style.display = 'none'; // Ẩn mặc định
+        soundControl.innerHTML = `
+            <input type="checkbox" id="sound-toggle" ${isSoundEnabled ? 'checked' : ''}>
+            <label for="sound-toggle">Giọng nói</label>
+        `;
+        buttonContainer.appendChild(soundControl);
+
+        // Thêm sự kiện cho checkbox âm thanh
+        const soundToggle = document.getElementById('sound-toggle');
+        soundToggle.addEventListener('change', function() {
+            localStorage.setItem('isSoundEnabled', this.checked);
+            updateSoundArrays(this.checked);
+        });
+
+        // Thêm sự kiện cho listbox độ khó
+        const difficultySelect = document.getElementById('difficulty');
+        difficultySelect.addEventListener('change', function() {
+            computerDifficulty = this.value;
+            localStorage.setItem('computerDifficulty', this.value);
+        });
+
+        // Khởi tạo trạng thái âm thanh
+        updateSoundArrays(isSoundEnabled);
+    }
+}
+
+// Tách logic cập nhật mảng âm thanh thành hàm riêng
+function updateSoundArrays(isEnabled) {
+    if (!isEnabled) {
+        // Nếu tắt âm thanh, set tất cả mảng âm thanh chỉ có 1 phần tử
+        winSounds.length = 1;
+        winSounds[0] = new Audio('sounds/sound.mp3');
+        
+        loseSounds.length = 1;
+        loseSounds[0] = new Audio('sounds/sound.mp3');
+        
+        moveSounds.length = 1;
+        moveSounds[0] = new Audio('sounds/sound.mp3');
+    } else {
+        // Nếu bật âm thanh, khôi phục lại các mảng âm thanh gốc
+        winSounds.splice(0, winSounds.length, 
+            new Audio('sounds/thắng rồi yahoo.mp3'),
+            new Audio('sounds/thắng rồi nha.mp3'),
+            new Audio('sounds/nanana.mp3'),
+            new Audio('sounds/đùa với ninja rùa à.mp3'),
+            new Audio('sounds/đánh thế không thắng được đâu bạn ơi.mp3')
+        );
+        
+        loseSounds.splice(0, loseSounds.length,
+            new Audio('sounds/buồn như con chuồn chuồn.mp3'),
+            new Audio('sounds/chán như con gián luôn.mp3'),
+            new Audio('sounds/chán thế nhờ 2.mp3'),
+            new Audio('sounds/chán thế nhờ.mp3'),
+            new Audio('sounds/thua mất rồi trời ơi.mp3')
+        );
+        
+        moveSounds.splice(0, moveSounds.length,
+            new Audio('sounds/đánh này.mp3'),
+            new Audio('sounds/đánh này_2.mp3'),
+            new Audio('sounds/đánh vào chỗ này.mp3'),
+            new Audio('sounds/đánh đê bạn ơi.mp3'),
+            new Audio('sounds/đỡ vào mắt nhé.mp3'),
+            new Audio('sounds/chơi hết mình đi bạn ơi.mp3'),
+            new Audio('sounds/đánh này.mp3'),
+            new Audio('sounds/đánh này_2.mp3'),
+            new Audio('sounds/đến lượt bạn rồi.mp3'),
+            new Audio('sounds/đến lượt bạn rồi_2.mp3'),
+            new Audio('sounds/đố bạn thắng được tôi đấy.mp3')
+        );
+    }
+    // Preload lại âm thanh
+    preloadSounds();
 } 
