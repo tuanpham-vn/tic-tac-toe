@@ -34,16 +34,6 @@ const loseSounds = [
 
 const moveSounds = [
     new Audio('sounds/đánh này.mp3'),
-    new Audio('sounds/đánh này_2.mp3'),
-    new Audio('sounds/đánh vào chỗ này.mp3'),
-    new Audio('sounds/đánh đê bạn ơi.mp3'),
-    new Audio('sounds/đỡ vào mắt nhé.mp3'),
-    new Audio('sounds/chơi hết mình đi bạn ơi.mp3'),
-    new Audio('sounds/đánh này.mp3'),
-    new Audio('sounds/đánh này_2.mp3'),
-    new Audio('sounds/đến lượt bạn rồi.mp3'),
-    new Audio('sounds/đến lượt bạn rồi_2.mp3'),
-    new Audio('sounds/đố bạn thắng được tôi đấy.mp3')
 ];
 
 let scores = {
@@ -1025,7 +1015,14 @@ function updateSoundArrays(isEnabled) {
             new Audio('sounds/thắng rồi nha.mp3'),
             new Audio('sounds/nanana.mp3'),
             new Audio('sounds/đùa với ninja rùa à.mp3'),
-            new Audio('sounds/đánh thế không thắng được đâu bạn ơi.mp3')
+            new Audio('sounds/hihi đùa với ninja rùa à.mp3'),
+            new Audio('sounds/đánh thế không thắng được đâu bạn ơi.mp3'),
+            new Audio('sounds/hát lalala.mp3'),
+            new Audio('sounds/này thì đánh này hihihi.mp3'),
+            new Audio('sounds/thua đi bạn ơi hihi.mp3'),
+            new Audio('sounds/thắng hoài thế này thì chán nhể.mp3'),
+            new Audio('sounds/có thắng được đâu mà đánh thế.mp3'),
+            new Audio('sounds/cười.mp3'),
         );
         
         loseSounds.splice(0, loseSounds.length,
@@ -1033,12 +1030,19 @@ function updateSoundArrays(isEnabled) {
             new Audio('sounds/chán như con gián luôn.mp3'),
             new Audio('sounds/chán thế nhờ 2.mp3'),
             new Audio('sounds/chán thế nhờ.mp3'),
-            new Audio('sounds/thua mất rồi trời ơi.mp3')
+            new Audio('sounds/thua mất rồi trời ơi.mp3'),
+            new Audio('sounds/thua rồi chán thế nhở.mp3'),
+            new Audio('sounds/thắng hoài thế này thì chán nhể.mp3')
         );
         
         moveSounds.splice(0, moveSounds.length,
             new Audio('sounds/đánh này.mp3'),
             new Audio('sounds/đánh này_2.mp3'),
+            new Audio('sounds/đánh này.mp3'),
+            new Audio('sounds/đánh này_2.mp3'),
+            new Audio('sounds/đánh này.mp3'),
+            new Audio('sounds/đánh này_2.mp3'),
+            new Audio('sounds/đánh này.mp3'),
             new Audio('sounds/đánh vào chỗ này.mp3'),
             new Audio('sounds/đánh đê bạn ơi.mp3'),
             new Audio('sounds/đỡ vào mắt nhé.mp3'),
@@ -1047,7 +1051,12 @@ function updateSoundArrays(isEnabled) {
             new Audio('sounds/đánh này_2.mp3'),
             new Audio('sounds/đến lượt bạn rồi.mp3'),
             new Audio('sounds/đến lượt bạn rồi_2.mp3'),
-            new Audio('sounds/đố bạn thắng được tôi đấy.mp3')
+            new Audio('sounds/đố bạn thắng được tôi đấy.mp3'),
+            new Audio('sounds/uhm cứ đánh vào đây đã.mp3'),
+            new Audio('sounds/này thì đánh này hihihi.mp3'),
+            new Audio('sounds/buồn ngủ thế nhờ.mp3'),
+            new Audio('sounds/à đánh này.mp3'),
+            new Audio('sounds/uhm cứ đánh vào đây đã.mp3'),
         );
     }
     // Preload lại âm thanh
