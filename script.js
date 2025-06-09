@@ -15,25 +15,24 @@ const avatarOptions = document.querySelectorAll('.avatar-options');
 const thinkingIndicator = document.getElementById('thinking-indicator');
 
 // Thêm biến âm thanh ở đầu file
-
 const winSounds = [
     new Audio('sounds/thắng rồi yahoo.mp3'),
-    new Audio('sounds/thắng rồi nha.mp3'),
-    new Audio('sounds/nanana.mp3'),
-    new Audio('sounds/đùa với ninja rùa à.mp3'),
-    new Audio('sounds/đánh thế không thắng được đâu bạn ơi.mp3')
+    new Audio('sounds/thắng rồi nha.mp3')
 ];
 
-const loseSounds = [
-    new Audio('sounds/buồn như con chuồn chuồn.mp3'),
-    new Audio('sounds/chán như con gián luôn.mp3'),
-    new Audio('sounds/chán thế nhờ 2.mp3'),
-    new Audio('sounds/chán thế nhờ.mp3'),
-    new Audio('sounds/thua mất rồi trời ơi.mp3')
+const loseAudios = [
+    new Audio('sounds/thua mất rồi trời ơi.mp3'),
+    new Audio('sounds/thua rồi chán thế nhở.mp3'),
+    new Audio('sounds/thắng hoài thế này thì chán nhể.mp3'),
+    new Audio('sounds/đánh thế không thắng được đâu bạn ơi.mp3'),
+    new Audio('sounds/chán như con gián luôn.mp3')
 ];
 
 const moveSounds = [
     new Audio('sounds/đánh này.mp3'),
+    new Audio('sounds/đánh này_2.mp3'),
+    new Audio('sounds/đến lượt bạn rồi.mp3'),
+    new Audio('sounds/đến lượt bạn rồi_2.mp3')
 ];
 
 let scores = {
@@ -305,6 +304,24 @@ function handleClick(e) {
 
 function handleCellClick(cell) {
     const currentClass = isPlayer1Turn ? 'x' : 'o';
+    
+    // Tạo và hiển thị icon cây bút
+    const penIcon = document.createElement('i');
+    penIcon.className = `fa-solid fa-pen pen-pointer ${isPlayer1Turn ? 'player1' : 'player2'}`;
+    const rect = cell.getBoundingClientRect();
+    const boardRect = board.getBoundingClientRect();
+    
+    // Tính toán vị trí tương đối so với bảng, dịch lên trên và sang trái
+    penIcon.style.left = (rect.left - boardRect.left + rect.width/2 - 5) + 'px';
+    penIcon.style.top = (rect.top - boardRect.top + rect.height/2 - 30) + 'px';
+    
+    board.appendChild(penIcon);
+    
+    // Xóa icon sau khi animation kết thúc (1.2s)
+    setTimeout(() => {
+        penIcon.remove();
+    }, 1200);
+
     placeMark(cell, currentClass);
     
     if (checkWin(currentClass)) {
@@ -855,7 +872,7 @@ function playWinSound() {
 
 // Hàm phát âm thanh thua cuộc
 function playLoseSound() {
-    const randomSound = loseSounds[Math.floor(Math.random() * loseSounds.length)];
+    const randomSound = loseAudios[Math.floor(Math.random() * loseAudios.length)];
     randomSound.currentTime = 0;
     randomSound.volume = 0.5;
     randomSound.play();
@@ -928,7 +945,7 @@ function checkWinningMove(cell, symbol) {
 
 // Thêm hàm để load trước âm thanh
 function preloadSounds() {
-    [...winSounds, ...loseSounds, ...moveSounds].forEach(sound => {
+    [...winSounds, ...loseAudios, ...moveSounds].forEach(sound => {
         sound.load();
         sound.preload = 'auto';
     });
@@ -1003,8 +1020,8 @@ function updateSoundArrays(isEnabled) {
         winSounds.length = 1;
         winSounds[0] = new Audio('sounds/sound.mp3');
         
-        loseSounds.length = 1;
-        loseSounds[0] = new Audio('sounds/sound.mp3');
+        loseAudios.length = 1;
+        loseAudios[0] = new Audio('sounds/sound.mp3');
         
         moveSounds.length = 1;
         moveSounds[0] = new Audio('sounds/sound.mp3');
@@ -1025,14 +1042,15 @@ function updateSoundArrays(isEnabled) {
             new Audio('sounds/cười.mp3'),
         );
         
-        loseSounds.splice(0, loseSounds.length,
+        loseAudios.splice(0, loseAudios.length,
             new Audio('sounds/buồn như con chuồn chuồn.mp3'),
             new Audio('sounds/chán như con gián luôn.mp3'),
             new Audio('sounds/chán thế nhờ 2.mp3'),
             new Audio('sounds/chán thế nhờ.mp3'),
             new Audio('sounds/thua mất rồi trời ơi.mp3'),
             new Audio('sounds/thua rồi chán thế nhở.mp3'),
-            new Audio('sounds/thắng hoài thế này thì chán nhể.mp3')
+            new Audio('sounds/thắng hoài thế này thì chán nhể.mp3'),
+            new Audio('sounds/ghe_qua.mp3')
         );
         
         moveSounds.splice(0, moveSounds.length,
