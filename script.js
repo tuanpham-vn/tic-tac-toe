@@ -1039,7 +1039,8 @@ function updateSoundArrays(isEnabled) {
             new Audio('sounds/thua đi bạn ơi hihi.mp3'),
             new Audio('sounds/thắng hoài thế này thì chán nhể.mp3'),
             new Audio('sounds/có thắng được đâu mà đánh thế.mp3'),
-            new Audio('sounds/cười.mp3'),
+            new Audio('sounds/cuoi.mp3'),
+            new Audio('sounds/eo oi ghe nho.mp3'),
         );
         
         loseAudios.splice(0, loseAudios.length,
@@ -1049,15 +1050,14 @@ function updateSoundArrays(isEnabled) {
             new Audio('sounds/chán thế nhờ.mp3'),
             new Audio('sounds/thua mất rồi trời ơi.mp3'),
             new Audio('sounds/thua rồi chán thế nhở.mp3'),
-            new Audio('sounds/thắng hoài thế này thì chán nhể.mp3'),
             new Audio('sounds/ghe_qua.mp3')
         );
         
         moveSounds.splice(0, moveSounds.length,
             new Audio('sounds/đánh này.mp3'),
             new Audio('sounds/đánh này_2.mp3'),
-            new Audio('sounds/đánh này.mp3'),
-            new Audio('sounds/đánh này_2.mp3'),
+            new Audio('sounds/đến lượt bạn rồi.mp3'),
+            new Audio('sounds/đến lượt bạn rồi_2.mp3'),
             new Audio('sounds/đánh này.mp3'),
             new Audio('sounds/đánh này_2.mp3'),
             new Audio('sounds/đánh này.mp3'),
