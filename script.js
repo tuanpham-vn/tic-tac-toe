@@ -17,22 +17,53 @@ const thinkingIndicator = document.getElementById('thinking-indicator');
 // Thêm biến âm thanh ở đầu file
 const winSounds = [
     new Audio('sounds/thắng rồi yahoo.mp3'),
-    new Audio('sounds/thắng rồi nha.mp3')
+    new Audio('sounds/thắng rồi nha.mp3'),
+    new Audio('sounds/nanana.mp3'),
+    new Audio('sounds/đùa với ninja rùa à.mp3'),
+    new Audio('sounds/hihi_dua_voi_nịna_rua_a.mp3'),
+    new Audio('sounds/đánh thế không thắng được đâu bạn ơi.mp3'),
+    new Audio('sounds/hát lalala.mp3'),
+    new Audio('sounds/này thì đánh này hihihi.mp3'),
+    new Audio('sounds/thua_di_ban_oi_hihi.mp3'),
+    new Audio('sounds/thang_hoai_the_nay_thi_chan_nhe.mp3'),
+    new Audio('sounds/co_thang_duoc_dau_ma_danh_the.mp3'),
+    new Audio('sounds/cuoi.mp3'),
+    new Audio('sounds/eo_oi_ghe_nho.mp3'),
+    new Audio('sounds/danh_buon_cuoi_the.mp3'),
 ];
 
 const loseAudios = [
+    new Audio('sounds/buồn như con chuồn chuồn.mp3'),
+    new Audio('sounds/chán như con gián luôn.mp3'),
+    new Audio('sounds/chán thế nhờ 2.mp3'),
+    new Audio('sounds/chán thế nhờ.mp3'),
     new Audio('sounds/thua mất rồi trời ơi.mp3'),
     new Audio('sounds/thua rồi chán thế nhở.mp3'),
-    new Audio('sounds/thắng hoài thế này thì chán nhể.mp3'),
-    new Audio('sounds/đánh thế không thắng được đâu bạn ơi.mp3'),
-    new Audio('sounds/chán như con gián luôn.mp3')
+    new Audio('sounds/ghe_qua.mp3')
 ];
 
 const moveSounds = [
     new Audio('sounds/đánh này.mp3'),
     new Audio('sounds/đánh này_2.mp3'),
     new Audio('sounds/đến lượt bạn rồi.mp3'),
-    new Audio('sounds/đến lượt bạn rồi_2.mp3')
+    new Audio('sounds/đến lượt bạn rồi_2.mp3'),
+    new Audio('sounds/đánh này.mp3'),
+    new Audio('sounds/đánh này_2.mp3'),
+    new Audio('sounds/đánh này.mp3'),
+    new Audio('sounds/đánh vào chỗ này.mp3'),
+    new Audio('sounds/đánh đê bạn ơi.mp3'),
+    new Audio('sounds/đỡ vào mắt nhé.mp3'),
+    new Audio('sounds/chơi hết mình đi bạn ơi.mp3'),
+    new Audio('sounds/đánh này.mp3'),
+    new Audio('sounds/đánh này_2.mp3'),
+    new Audio('sounds/đến lượt bạn rồi.mp3'),
+    new Audio('sounds/đến lượt bạn rồi_2.mp3'),
+    new Audio('sounds/đố bạn thắng được tôi đấy.mp3'),
+    new Audio('sounds/uhm cứ đánh vào đây đã.mp3'),
+    new Audio('sounds/này thì đánh này hihihi.mp3'),
+    new Audio('sounds/buồn ngủ thế nhờ.mp3'),
+    new Audio('sounds/à đánh này.mp3'),
+    new Audio('sounds/uhm cứ đánh vào đây đã.mp3'),
 ];
 
 let scores = {
@@ -1032,15 +1063,16 @@ function updateSoundArrays(isEnabled) {
             new Audio('sounds/thắng rồi nha.mp3'),
             new Audio('sounds/nanana.mp3'),
             new Audio('sounds/đùa với ninja rùa à.mp3'),
-            new Audio('sounds/hihi đùa với ninja rùa à.mp3'),
+            new Audio('sounds/hihi_dua_voi_nịna_rua_a.mp3'),
             new Audio('sounds/đánh thế không thắng được đâu bạn ơi.mp3'),
             new Audio('sounds/hát lalala.mp3'),
             new Audio('sounds/này thì đánh này hihihi.mp3'),
-            new Audio('sounds/thua đi bạn ơi hihi.mp3'),
-            new Audio('sounds/thắng hoài thế này thì chán nhể.mp3'),
-            new Audio('sounds/có thắng được đâu mà đánh thế.mp3'),
+            new Audio('sounds/thua_di_ban_oi_hihi.mp3'),
+            new Audio('sounds/thang_hoai_the_nay_thi_chan_nhe.mp3'),
+            new Audio('sounds/co_thang_duoc_dau_ma_danh_the.mp3'),
             new Audio('sounds/cuoi.mp3'),
-            new Audio('sounds/eo oi ghe nho.mp3'),
+            new Audio('sounds/eo_oi_ghe_nho.mp3'),
+            new Audio('sounds/danh_buon_cuoi_the.mp3'),
         );
         
         loseAudios.splice(0, loseAudios.length,
