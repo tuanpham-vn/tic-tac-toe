@@ -292,7 +292,7 @@ function startGame(withComputer = false) {
     // Thêm lại sự kiện click cho các ô
     cells.forEach(cell => {
         cell.removeEventListener('click', handleClick);
-        cell.addEventListener('click', handleClick, { once: true });
+        cell.addEventListener('click', handleClick);
     });
 
     // Cập nhật giao diện
@@ -330,6 +330,8 @@ function handleClick(e) {
     const cell = e.target;
     if (cell.classList.contains('x') || cell.classList.contains('o')) return;
     
+    // Remove event listener chỉ khi đánh quân thành công
+    cell.removeEventListener('click', handleClick);
     handleCellClick(cell);
 }
 
@@ -587,6 +589,8 @@ function restartGame() {
         cell.classList.remove('x', 'o', 'winning', 'last-move');
         cell.textContent = '';
         cell.innerHTML = '';
+        cell.removeEventListener('click', handleClick);
+        cell.addEventListener('click', handleClick);
     });
 
     // Ẩn winning message nếu đang hiển thị
