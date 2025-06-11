@@ -96,6 +96,16 @@ const congratMessages = [
     "💫 Siêu sao cờ ca-rô đây rồi!",
     "🔥 Quá hot! Đối thủ phải chào thua!",
     "🌈 Tuyệt vời ông mặt trời!",
+    "🎪 Xinh đẹp tài giỏi lại còn giỏi cờ ca-rô nữa!",
+    "🎭 Thông minh quá! Đánh hay như diễn viên chính vậy!",
+    "🎨 Nghệ sĩ của trò chơi đây rồi!",
+    "🎪 Dễ thương mà còn giỏi thế này!",
+    "🎭 Thắng đẹp như một vở kịch hay!",
+    "🎪 Tài năng xuất chúng! Ai cũng phải nể phục!",
+    "🎭 Quá đáng yêu! Vừa xinh vừa giỏi!",
+    "🎨 Nghệ thuật đánh cờ của bạn thật tuyệt vời!",
+    "🎪 Dễ thương hết phần thiên hạ!",
+    "🎭 Thắng đẹp như một vở diễn hoàn hảo!"
 ];
 
 // Hàm lấy ngẫu nhiên lời chúc mừng
@@ -897,29 +907,63 @@ function findBestMove() {
     return bestCell;
 }
 
+// Thiết lập preload và volume cho tất cả âm thanh
+function setupAudio(audioArray) {
+    audioArray.forEach(audio => {
+        audio.preload = 'auto';
+        audio.volume = 0.5;
+    });
+}
+
+// Hàm phát âm thanh an toàn
+function playAudioSafely(audio) {
+    if (!isSoundEnabled) return;
+    
+    audio.currentTime = 0;
+    const playPromise = audio.play();
+    
+    if (playPromise !== undefined) {
+        playPromise.catch(error => {
+            console.log("Playback prevented:", error);
+        });
+    }
+}
+
 // Hàm phát âm thanh chiến thắng
 function playWinSound() {
+    if (!isSoundEnabled) return;
     const randomSound = winSounds[Math.floor(Math.random() * winSounds.length)];
-    randomSound.currentTime = 0;
-    randomSound.volume = 0.5;
-    randomSound.play();
+    playAudioSafely(randomSound);
 }
 
 // Hàm phát âm thanh thua cuộc
 function playLoseSound() {
+    if (!isSoundEnabled) return;
     const randomSound = loseAudios[Math.floor(Math.random() * loseAudios.length)];
-    randomSound.currentTime = 0;
-    randomSound.volume = 0.5;
-    randomSound.play();
+    playAudioSafely(randomSound);
 }
 
 // Hàm phát âm thanh di chuyển
 function playMoveSound() {
-    if (!gameActive) return; // Không phát âm thanh nếu game đã kết thúc
+    if (!gameActive || !isSoundEnabled) return;
     const randomSound = moveSounds[Math.floor(Math.random() * moveSounds.length)];
-    randomSound.currentTime = 0;
-    randomSound.volume = 0.5;
-    randomSound.play();
+    playAudioSafely(randomSound);
+}
+
+// Thêm hàm để load trước âm thanh
+function preloadSounds() {
+    setupAudio(winSounds);
+    setupAudio(loseAudios);
+    setupAudio(moveSounds);
+}
+
+// Tách logic cập nhật mảng âm thanh thành hàm riêng
+function updateSoundArrays(isEnabled) {
+    isSoundEnabled = isEnabled;
+    const allSounds = [...winSounds, ...loseAudios, ...moveSounds];
+    allSounds.forEach(sound => {
+        sound.volume = isEnabled ? 0.5 : 0;
+    });
 }
 
 // Cập nhật hàm computerPlay
@@ -976,14 +1020,6 @@ function checkWinningMove(cell, symbol) {
     cell.className = originalClass;
     
     return isWinning;
-}
-
-// Thêm hàm để load trước âm thanh
-function preloadSounds() {
-    [...winSounds, ...loseAudios, ...moveSounds].forEach(sound => {
-        sound.load();
-        sound.preload = 'auto';
-    });
 }
 
 // Khởi tạo khi trang được load
@@ -1046,73 +1082,4 @@ function initializeBoard() {
         // Khởi tạo trạng thái âm thanh
         updateSoundArrays(isSoundEnabled);
     }
-}
-
-// Tách logic cập nhật mảng âm thanh thành hàm riêng
-function updateSoundArrays(isEnabled) {
-    if (!isEnabled) {
-        // Nếu tắt âm thanh, set tất cả mảng âm thanh chỉ có 1 phần tử
-        winSounds.length = 1;
-        winSounds[0] = new Audio('sounds/sound.mp3');
-        
-        loseAudios.length = 1;
-        loseAudios[0] = new Audio('sounds/sound.mp3');
-        
-        moveSounds.length = 1;
-        moveSounds[0] = new Audio('sounds/sound.mp3');
-    } else {
-        // Nếu bật âm thanh, khôi phục lại các mảng âm thanh gốc
-        winSounds.splice(0, winSounds.length, 
-            new Audio('sounds/thắng rồi yahoo.mp3'),
-            new Audio('sounds/thắng rồi nha.mp3'),
-            new Audio('sounds/nanana.mp3'),
-            new Audio('sounds/đùa với ninja rùa à.mp3'),
-            new Audio('sounds/hihi_dua_voi_nịna_rua_a.mp3'),
-            new Audio('sounds/đánh thế không thắng được đâu bạn ơi.mp3'),
-            new Audio('sounds/hát lalala.mp3'),
-            new Audio('sounds/này thì đánh này hihihi.mp3'),
-            new Audio('sounds/thua_di_ban_oi_hihi.mp3'),
-            new Audio('sounds/thang_hoai_the_nay_thi_chan_nhe.mp3'),
-            new Audio('sounds/co_thang_duoc_dau_ma_danh_the.mp3'),
-            new Audio('sounds/cuoi.mp3'),
-            new Audio('sounds/eo_oi_ghe_nho.mp3'),
-            new Audio('sounds/danh_buon_cuoi_the.mp3'),
-        );
-        
-        loseAudios.splice(0, loseAudios.length,
-            new Audio('sounds/buồn như con chuồn chuồn.mp3'),
-            new Audio('sounds/chán như con gián luôn.mp3'),
-            new Audio('sounds/chán thế nhờ 2.mp3'),
-            new Audio('sounds/chán thế nhờ.mp3'),
-            new Audio('sounds/thua mất rồi trời ơi.mp3'),
-            new Audio('sounds/thua rồi chán thế nhở.mp3'),
-            new Audio('sounds/ghe_qua.mp3')
-        );
-        
-        moveSounds.splice(0, moveSounds.length,
-            new Audio('sounds/đánh này.mp3'),
-            new Audio('sounds/đánh này_2.mp3'),
-            new Audio('sounds/đến lượt bạn rồi.mp3'),
-            new Audio('sounds/đến lượt bạn rồi_2.mp3'),
-            new Audio('sounds/đánh này.mp3'),
-            new Audio('sounds/đánh này_2.mp3'),
-            new Audio('sounds/đánh này.mp3'),
-            new Audio('sounds/đánh vào chỗ này.mp3'),
-            new Audio('sounds/đánh đê bạn ơi.mp3'),
-            new Audio('sounds/đỡ vào mắt nhé.mp3'),
-            new Audio('sounds/chơi hết mình đi bạn ơi.mp3'),
-            new Audio('sounds/đánh này.mp3'),
-            new Audio('sounds/đánh này_2.mp3'),
-            new Audio('sounds/đến lượt bạn rồi.mp3'),
-            new Audio('sounds/đến lượt bạn rồi_2.mp3'),
-            new Audio('sounds/đố bạn thắng được tôi đấy.mp3'),
-            new Audio('sounds/uhm cứ đánh vào đây đã.mp3'),
-            new Audio('sounds/này thì đánh này hihihi.mp3'),
-            new Audio('sounds/buồn ngủ thế nhờ.mp3'),
-            new Audio('sounds/à đánh này.mp3'),
-            new Audio('sounds/uhm cứ đánh vào đây đã.mp3'),
-        );
-    }
-    // Preload lại âm thanh
-    preloadSounds();
 } 

@@ -3,7 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Trò Chơi Cờ Ca-rô</title>
+    <title>Cờ Ca rô Việt Nam - Vietnamese Tic Tac Toe</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Trò chơi cờ ca rô Việt Nam dành cho trẻ em với giao diện đẹp mắt, âm thanh vui nhộn. Chơi với bạn hoặc đấu với máy.">
+    <meta name="keywords" content="cờ ca rô, tic tac toe, trò chơi trẻ em, game việt nam, gomoku">
+    <meta name="author" content="Vietnamese Game Developer">
+    <meta property="og:title" content="Cờ Ca rô Việt Nam - Vietnamese Tic Tac Toe">
+    <meta property="og:description" content="Trò chơi cờ ca rô Việt Nam dành cho trẻ em với giao diện đẹp mắt, âm thanh vui nhộn. Chơi với bạn hoặc đấu với máy.">
+    <meta property="og:type" content="website">
+    <meta name="robots" content="index, follow">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="tic-tac-toe-32.png">
+    <link rel="apple-touch-icon" href="tic-tac-toe-32.png">
+    
+    <!-- Fonts and Styles -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -11,8 +26,56 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+    <style>
+        .audio-preload {
+            display: none;
+        }
+    </style>
 </head>
 <body>
+    <!-- Audio Preload Section -->
+    <div class="audio-preload">
+        <!-- Win Sounds -->
+        <audio id="win-1" src="sounds/thắng rồi yahoo.mp3" preload="auto" crossorigin="anonymous"></audio>
+        <audio id="win-2" src="sounds/thắng rồi nha.mp3" preload="auto" crossorigin="anonymous"></audio>
+        <audio id="win-3" src="sounds/nanana.mp3" preload="auto" crossorigin="anonymous"></audio>
+        <audio id="win-4" src="sounds/đùa với ninja rùa à.mp3" preload="auto" crossorigin="anonymous"></audio>
+        <audio id="win-5" src="sounds/hihi_dua_voi_nịna_rua_a.mp3" preload="auto" crossorigin="anonymous"></audio>
+        <audio id="win-6" src="sounds/đánh thế không thắng được đâu bạn ơi.mp3" preload="auto" crossorigin="anonymous"></audio>
+        <audio id="win-7" src="sounds/hát lalala.mp3" preload="auto" crossorigin="anonymous"></audio>
+        <audio id="win-8" src="sounds/này thì đánh này hihihi.mp3" preload="auto" crossorigin="anonymous"></audio>
+        <audio id="win-9" src="sounds/thua_di_ban_oi_hihi.mp3" preload="auto" crossorigin="anonymous"></audio>
+        <audio id="win-10" src="sounds/thang_hoai_the_nay_thi_chan_nhe.mp3" preload="auto" crossorigin="anonymous"></audio>
+        <audio id="win-11" src="sounds/co_thang_duoc_dau_ma_danh_the.mp3" preload="auto" crossorigin="anonymous"></audio>
+        <audio id="win-12" src="sounds/cuoi.mp3" preload="auto" crossorigin="anonymous"></audio>
+        <audio id="win-13" src="sounds/eo_oi_ghe_nho.mp3" preload="auto" crossorigin="anonymous"></audio>
+        <audio id="win-14" src="sounds/danh_buon_cuoi_the.mp3" preload="auto" crossorigin="anonymous"></audio>
+
+        <!-- Lose Sounds -->
+        <audio id="lose-1" src="sounds/buồn như con chuồn chuồn.mp3" preload="auto" crossorigin="anonymous"></audio>
+        <audio id="lose-2" src="sounds/chán như con gián luôn.mp3" preload="auto" crossorigin="anonymous"></audio>
+        <audio id="lose-3" src="sounds/chán thế nhờ 2.mp3" preload="auto" crossorigin="anonymous"></audio>
+        <audio id="lose-4" src="sounds/chán thế nhờ.mp3" preload="auto" crossorigin="anonymous"></audio>
+        <audio id="lose-5" src="sounds/thua mất rồi trời ơi.mp3" preload="auto" crossorigin="anonymous"></audio>
+        <audio id="lose-6" src="sounds/thua rồi chán thế nhở.mp3" preload="auto" crossorigin="anonymous"></audio>
+        <audio id="lose-7" src="sounds/ghe_qua.mp3" preload="auto" crossorigin="anonymous"></audio>
+
+        <!-- Move Sounds -->
+        <audio id="move-1" src="sounds/đánh này.mp3" preload="auto" crossorigin="anonymous"></audio>
+        <audio id="move-2" src="sounds/đánh này_2.mp3" preload="auto" crossorigin="anonymous"></audio>
+        <audio id="move-3" src="sounds/đến lượt bạn rồi.mp3" preload="auto" crossorigin="anonymous"></audio>
+        <audio id="move-4" src="sounds/đến lượt bạn rồi_2.mp3" preload="auto" crossorigin="anonymous"></audio>
+        <audio id="move-5" src="sounds/đánh vào chỗ này.mp3" preload="auto" crossorigin="anonymous"></audio>
+        <audio id="move-6" src="sounds/đánh đê bạn ơi.mp3" preload="auto" crossorigin="anonymous"></audio>
+        <audio id="move-7" src="sounds/đỡ vào mắt nhé.mp3" preload="auto" crossorigin="anonymous"></audio>
+        <audio id="move-8" src="sounds/chơi hết mình đi bạn ơi.mp3" preload="auto" crossorigin="anonymous"></audio>
+        <audio id="move-9" src="sounds/đố bạn thắng được tôi đấy.mp3" preload="auto" crossorigin="anonymous"></audio>
+        <audio id="move-10" src="sounds/uhm cứ đánh vào đây đã.mp3" preload="auto" crossorigin="anonymous"></audio>
+        <audio id="move-11" src="sounds/này thì đánh này hihihi.mp3" preload="auto" crossorigin="anonymous"></audio>
+        <audio id="move-12" src="sounds/buồn ngủ thế nhờ.mp3" preload="auto" crossorigin="anonymous"></audio>
+        <audio id="move-13" src="sounds/à đánh này.mp3" preload="auto" crossorigin="anonymous"></audio>
+    </div>
+
     <div class="game-container">
         <div class="player player-1 current-turn">
             <div class="player-info">
