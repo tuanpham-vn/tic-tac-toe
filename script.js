@@ -14,7 +14,6 @@ const avatarSelectors = document.querySelectorAll('.avatar-selector');
 const avatarOptions = document.querySelectorAll('.avatar-options');
 const thinkingIndicator = document.getElementById('thinking-indicator');
 
-// Thêm biến âm thanh ở đầu file
 const winSounds = [
     new Audio('sounds/thắng rồi yahoo.mp3'),
     new Audio('sounds/thắng rồi nha.mp3'),
@@ -76,14 +75,11 @@ let gameActive = false;
 let lastWinner = null;
 let isComputerMode = false;
 let lastHumanMove = null;
-let isFirstGame = true; // Thêm biến để theo dõi trận đầu tiên
-let cells; // Thêm biến cells ở scope toàn cục
+let isFirstGame = true;
+let cells;
+let isSoundEnabled = localStorage.getItem('isSoundEnabled') !== 'false';
+let computerDifficulty = localStorage.getItem('computerDifficulty') || '5';
 
-// Thêm biến để lưu trạng thái âm thanh
-let isSoundEnabled = localStorage.getItem('isSoundEnabled') !== 'false'; // Mặc định là true nếu chưa có trong storage
-let computerDifficulty = localStorage.getItem('computerDifficulty') || '5'; // Mặc định là 5 tuổi
-
-// Mảng các lời chúc mừng
 const congratMessages = [
     "🎉 Xuất sắc! Bạn đã chiến thắng đầy thuyết phục!",
     "🌟 Wow! Đúng là bậc thầy cờ ca-rô!",
@@ -108,19 +104,16 @@ const congratMessages = [
     "🎭 Thắng đẹp như một vở diễn hoàn hảo!"
 ];
 
-// Hàm lấy ngẫu nhiên lời chúc mừng
 function getRandomCongratMessage() {
     const randomIndex = Math.floor(Math.random() * congratMessages.length);
     return congratMessages[randomIndex];
 }
 
-// Xử lý click vào avatar để đổi
 avatarSelectors.forEach(selector => {
     selector.addEventListener('click', (e) => {
         const options = selector.querySelector('.avatar-options');
         options.classList.toggle('show');
         
-        // Đóng avatar options khi click ra ngoài
         const closeHandler = (event) => {
             if (!event.target.closest('.avatar-selector')) {
                 options.classList.remove('show');
@@ -137,19 +130,23 @@ avatarSelectors.forEach(selector => {
 avatarOptions.forEach(options => {
     options.querySelectorAll('i').forEach(icon => {
         icon.addEventListener('click', (e) => {
-            e.stopPropagation(); // Ngăn sự kiện click lan tỏa
+            e.stopPropagation();
             const avatar = e.target.dataset.avatar;
             const currentAvatar = options.closest('.avatar-selector').querySelector('.current-avatar');
             currentAvatar.className = `current-avatar fa-solid ${avatar} fa-6x`;
             options.classList.remove('show');
+
+            const playerNumber = options.id === 'avatarOptions1' ? 1 : 2;
+            if (!isComputerMode || playerNumber === 2) {
+                const playerName = playerNumber === 1 ? player1NameInput.value : player2NameInput.value;
+                savePlayerInfo(playerNumber, playerName, avatar);
+            }
         });
     });
 });
 
-// Tạo mảng các combination chiến thắng cho bảng 10x10
 const WINNING_COMBINATIONS = [];
 
-// Thêm các hàng
 for (let i = 0; i < 10; i++) {
     const row = [];
     for (let j = 0; j < 6; j++) {
@@ -158,7 +155,6 @@ for (let i = 0; i < 10; i++) {
     WINNING_COMBINATIONS.push(...row);
 }
 
-// Thêm các cột
 for (let i = 0; i < 10; i++) {
     const col = [];
     for (let j = 0; j < 6; j++) {
@@ -167,10 +163,8 @@ for (let i = 0; i < 10; i++) {
     WINNING_COMBINATIONS.push(...col);
 }
 
-// Thêm các đường chéo
 for (let i = 0; i < 6; i++) {
     for (let j = 0; j < 6; j++) {
-        // Đường chéo từ trái sang phải
         if (j + 4 < 10 && i + 4 < 10) {
             WINNING_COMBINATIONS.push([
                 i * 10 + j,
@@ -180,7 +174,6 @@ for (let i = 0; i < 6; i++) {
                 (i + 4) * 10 + (j + 4)
             ]);
         }
-        // Đường chéo từ phải sang trái
         if (j + 4 < 10 && i + 4 < 10) {
             WINNING_COMBINATIONS.push([
                 i * 10 + (j + 4),
@@ -203,7 +196,6 @@ function updateTurnInfo() {
     const symbol = isPlayer1Turn ? 'X' : 'O';
     turnInfo.textContent = `Lượt của ${currentPlayerName} (${symbol})`;
     
-    // Cập nhật class current-turn và hiệu ứng lắc lư
     const player1Element = document.querySelector('.player-1');
     const player2Element = document.querySelector('.player-2');
     const player1Avatar = player1Element.querySelector('.current-avatar');
@@ -235,7 +227,6 @@ function activatePlayerAvatar(playerNumber) {
         player2Avatar.classList.add('active');
     }
     
-    // Xóa animation sau 2 giây
     setTimeout(() => {
         player1Avatar.classList.remove('active');
         player2Avatar.classList.remove('active');
@@ -243,75 +234,115 @@ function activatePlayerAvatar(playerNumber) {
 }
 
 function startGame(withComputer = false) {
-    // Xóa hiệu ứng chiến thắng nếu có
     cells.forEach(cell => {
         cell.classList.remove('winning');
         cell.classList.remove('last-move');
-        cell.innerHTML = '';  // Xóa cả icon nếu có
+        cell.innerHTML = '';
         cell.classList.remove('x', 'o');
         cell.textContent = '';
     });
     winningMessage.classList.remove('show');
 
-    // Dừng hiệu ứng nhắc nhở của các nút
     startButton.classList.remove('remind');
     playWithComputerButton.classList.remove('remind');
 
-    // Thiết lập chế độ chơi
     isComputerMode = withComputer;
     
-    // Thiết lập tên và avatar cho máy nếu cần
     if (withComputer) {
-        player1NameInput.value = "Máy";
         player1NameInput.disabled = true;
-        document.querySelector('.player-1 .current-avatar').className = 'current-avatar fa-solid fa-robot fa-6x';
+        
+        const difficultyControl = document.querySelector('.difficulty-select');
+        if (difficultyControl) {
+            difficultyControl.style.display = 'block';
+            const selectElement = difficultyControl.querySelector('select');
+            if (selectElement) {
+                selectElement.className = 'computer-player';
+                selectElement.style.color = '#f44336';
+                selectElement.style.fontWeight = 'bold';
+            }
+        }
+        
+        let computerAvatar;
+        switch(computerDifficulty) {
+            case '5':
+                computerAvatar = 'fa-cat';
+                player1NameInput.value = "Bé Mèo Con";
+                break;
+            case '8':
+                computerAvatar = 'fa-dog';
+                player1NameInput.value = "Anh Cún Con";
+                break;
+            case '20':
+                computerAvatar = 'fa-otter';
+                player1NameInput.value = "Cô Lười Lém";
+                break;
+            case '24':
+                computerAvatar = 'fa-hippo';
+                player1NameInput.value = "Bác Hà Mã";
+                break;
+            case '36':
+                computerAvatar = 'fa-dragon';
+                player1NameInput.value = "Cao thủ Rồng";
+                break;
+            default:
+                computerAvatar = 'fa-cat';
+                player1NameInput.value = "Bé Mèo Con";
+        }
+        
+        document.querySelector('.player-1 .current-avatar').className = `current-avatar fa-solid ${computerAvatar} fa-6x`;
         document.querySelector('.player-1 .avatar-selector').style.pointerEvents = 'none';
     } else {
-        player1NameInput.value = "Méo";
+        loadPlayerInfo();
+
         player1NameInput.disabled = false;
+        player1NameInput.value = "Méo";
+
+        const difficultyControl = document.querySelector('.difficulty-select');
+        if (difficultyControl) {
+            difficultyControl.style.display = 'none';
+            const selectElement = difficultyControl.querySelector('select');
+            if (selectElement) {
+                selectElement.className = '';
+                selectElement.style.color = '';
+                selectElement.style.fontWeight = '';
+            }
+            document.querySelector('.button-container').appendChild(difficultyControl);
+        }
+
         document.querySelector('.player-1 .current-avatar').className = 'current-avatar fa-solid fa-cat fa-6x';
         document.querySelector('.player-1 .avatar-selector').style.pointerEvents = 'auto';
     }
 
-    // Kiểm tra xem người chơi đã nhập tên chưa
     if (!player2NameInput.value.trim()) {
         alert('Vui lòng nhập tên người chơi!');
         return;
     }
 
-    // Xác định người đi trước
     if (isFirstGame) {
-        // Trận đầu tiên, máy luôn đi trước trong chế độ chơi với máy
-        isPlayer1Turn = withComputer;  // true nếu là máy, false nếu là người chơi
+        isPlayer1Turn = withComputer;
     } else {
-        // Từ trận thứ 2, người thắng được đi trước
         if (lastWinner === 'player1') {
-            isPlayer1Turn = true; // Máy thắng, máy đi trước
+            isPlayer1Turn = true;
         } else if (lastWinner === 'player2') {
-            isPlayer1Turn = false; // Người chơi thắng, người chơi đi trước
+            isPlayer1Turn = false;
         } else {
-            // Nếu hòa, người chơi 1 đi trước
             isPlayer1Turn = true;
         }
     }
 
-    // Reset lại trạng thái game
     lastHumanMove = null;
     gameActive = true;
     
-    // Thêm lại sự kiện click cho các ô
     cells.forEach(cell => {
         cell.removeEventListener('click', handleClick);
         cell.addEventListener('click', handleClick);
     });
 
-    // Cập nhật giao diện
     updateTurnInfo();
     startButton.style.display = 'none';
     playWithComputerButton.style.display = 'none';
     restartButton.style.display = 'block';
 
-    // Hiển thị/ẩn các controls khi chơi với máy
     const difficultyControl = document.querySelector('.difficulty-select');
     const soundControl = document.querySelector('.sound-checkbox');
     if (difficultyControl && soundControl) {
@@ -319,7 +350,6 @@ function startGame(withComputer = false) {
         soundControl.style.display = withComputer ? 'flex' : 'none';
     }
 
-    // Nếu chơi với máy và đến lượt máy, cho máy đánh
     if (withComputer && isPlayer1Turn) {
         setTimeout(computerPlay, isFirstGame ? 0 : 500);
     }
@@ -334,13 +364,11 @@ function handleClick(e) {
         return;
     }
     
-    // Trong chế độ chơi với máy, chỉ cho phép người chơi đánh khi đến lượt (O)
     if (isComputerMode && isPlayer1Turn) return;
     
     const cell = e.target;
     if (cell.classList.contains('x') || cell.classList.contains('o')) return;
     
-    // Remove event listener chỉ khi đánh quân thành công
     cell.removeEventListener('click', handleClick);
     handleCellClick(cell);
 }
@@ -348,19 +376,16 @@ function handleClick(e) {
 function handleCellClick(cell) {
     const currentClass = isPlayer1Turn ? 'x' : 'o';
     
-    // Tạo và hiển thị icon cây bút
     const penIcon = document.createElement('i');
     penIcon.className = `fa-solid fa-pen pen-pointer ${isPlayer1Turn ? 'player1' : 'player2'}`;
     const rect = cell.getBoundingClientRect();
     const boardRect = board.getBoundingClientRect();
     
-    // Tính toán vị trí tương đối so với bảng, dịch lên trên và sang trái
     penIcon.style.left = (rect.left - boardRect.left + rect.width/2 - 5) + 'px';
     penIcon.style.top = (rect.top - boardRect.top + rect.height/2 - 30) + 'px';
     
     board.appendChild(penIcon);
     
-    // Xóa icon sau khi animation kết thúc (1.2s)
     setTimeout(() => {
         penIcon.remove();
     }, 1200);
@@ -375,12 +400,10 @@ function handleCellClick(cell) {
         swapTurns();
         updateTurnInfo();
         
-        // Lưu nước đi của người chơi
         if (isComputerMode && !isPlayer1Turn) {
             lastHumanMove = cell;
         }
         
-        // Nếu đang ở chế độ chơi với máy và đến lượt máy, cho máy đánh
         if (isComputerMode && isPlayer1Turn) {
             computerPlay();
         }
@@ -388,16 +411,13 @@ function handleCellClick(cell) {
 }
 
 function placeMark(cell, currentClass) {
-    // Xóa highlight ô đánh cuối cùng trước đó
     cells.forEach(c => c.classList.remove('last-move'));
     
     cell.classList.add(currentClass);
-    // Chỉ hiển thị X/O khi chưa thắng
     if (!cell.classList.contains('winning')) {
         cell.textContent = currentClass.toUpperCase();
     }
     
-    // Highlight ô vừa đánh
     cell.classList.add('last-move');
 }
 
@@ -409,7 +429,6 @@ function checkWin(currentClass) {
     let hasWon = false;
     let winningCombination = null;
 
-    // Kiểm tra hàng ngang
     for (let row = 0; row < 10; row++) {
         for (let col = 0; col <= 5; col++) {
             let win = true;
@@ -428,7 +447,6 @@ function checkWin(currentClass) {
         if (hasWon) break;
     }
 
-    // Kiểm tra hàng dọc
     if (!hasWon) {
         for (let col = 0; col < 10; col++) {
             for (let row = 0; row <= 5; row++) {
@@ -449,7 +467,6 @@ function checkWin(currentClass) {
         }
     }
 
-    // Kiểm tra đường chéo xuống phải
     if (!hasWon) {
         for (let row = 0; row <= 5; row++) {
             for (let col = 0; col <= 5; col++) {
@@ -470,7 +487,6 @@ function checkWin(currentClass) {
         }
     }
 
-    // Kiểm tra đường chéo xuống trái
     if (!hasWon) {
         for (let row = 0; row <= 5; row++) {
             for (let col = 4; col < 10; col++) {
@@ -492,7 +508,6 @@ function checkWin(currentClass) {
     }
 
     if (hasWon && winningCombination) {
-        // Thay thế X/O bằng mặt cười trên các ô thắng
         winningCombination.forEach(index => {
             const cell = cells[index];
             cell.classList.add('winning');
@@ -509,7 +524,6 @@ function isDraw() {
     });
 }
 
-// Tạo hiệu ứng confetti
 function createConfetti() {
     const colors = ['#ff6b6b', '#4d96ff', '#ffd868'];
     confetti({
@@ -521,7 +535,6 @@ function createConfetti() {
     });
 }
 
-// Tạo hiệu ứng confetti 3 lần
 function playConfettiEffect() {
     createConfetti();
     setTimeout(createConfetti, 500);
@@ -542,13 +555,12 @@ function endGame(draw) {
             document.querySelector('.player-2 .current-avatar').className.split(' ')[2];
         const congratMessage = getRandomCongratMessage();
             
-        // Phát hiệu ứng confetti và âm thanh khi thắng/thua
         playConfettiEffect();
         if (isComputerMode) {
             if (isPlayer1Turn) {
-                playWinSound(); // Máy thắng
+                playWinSound();
             } else {
-                playLoseSound(); // Máy thua
+                playLoseSound();
             }
         }
             
@@ -578,9 +590,8 @@ function restartGame() {
     playWithComputerButton.style.display = 'block';
     restartButton.style.display = 'none';
     gameActive = false;
-    isFirstGame = true; // Reset lại trận đầu tiên
+    isFirstGame = true;
     
-    // Ẩn các controls
     const difficultyControl = document.querySelector('.difficulty-select');
     const soundControl = document.querySelector('.sound-checkbox');
     if (difficultyControl && soundControl) {
@@ -588,13 +599,11 @@ function restartGame() {
         soundControl.style.display = 'none';
     }
     
-    // Reset lại trạng thái của player 1 nếu đang ở chế độ máy
     if (isComputerMode) {
         player1NameInput.disabled = false;
         document.querySelector('.player-1 .avatar-selector').style.pointerEvents = 'auto';
     }
 
-    // Reset lại tất cả các ô
     cells.forEach(cell => {
         cell.classList.remove('x', 'o', 'winning', 'last-move');
         cell.textContent = '';
@@ -603,14 +612,11 @@ function restartGame() {
         cell.addEventListener('click', handleClick);
     });
 
-    // Ẩn winning message nếu đang hiển thị
     winningMessage.classList.remove('show');
 
-    // Reset lại thông tin lượt chơi
     turnInfo.textContent = 'Lượt của: Méo (X)';
     isPlayer1Turn = true;
 
-    // Reset lại trạng thái người chơi
     const player1Element = document.querySelector('.player-1');
     const player2Element = document.querySelector('.player-2');
     const player1Avatar = player1Element.querySelector('.current-avatar');
@@ -623,32 +629,37 @@ function restartGame() {
 }
 
 function playAgain() {
-    isFirstGame = false; // Đánh dấu không phải trận đầu tiên
-    startGame(isComputerMode); // Sử dụng trạng thái hiện tại của isComputerMode
+    isFirstGame = false;
+    startGame(isComputerMode);
 }
 
-// Thêm sự kiện cho các nút
 startButton.addEventListener('click', () => startGame(false));
 playWithComputerButton.addEventListener('click', () => startGame(true));
 restartButton.addEventListener('click', restartGame);
 playAgainButton.addEventListener('click', playAgain);
 
-// Thêm sự kiện cho input name
-player1NameInput.addEventListener('input', updateTurnInfo);
-player2NameInput.addEventListener('input', updateTurnInfo);
+player1NameInput.addEventListener('change', function() {
+    if (!isComputerMode) {
+        savePlayerInfo(1, this.value, document.querySelector('.player-1 .current-avatar').className.split(' ')[2]);
+    }
+    updateTurnInfo();
+});
 
-// Hàm kiểm tra xem có 4 quân liên tiếp không
+player2NameInput.addEventListener('change', function() {
+    savePlayerInfo(2, this.value, document.querySelector('.player-2 .current-avatar').className.split(' ')[2]);
+    updateTurnInfo();
+});
+
 function checkFourInARow(currentClass) {
-    // Kiểm tra hàng ngang
     for (let row = 0; row < 10; row++) {
         for (let col = 0; col <= 5; col++) {
             let count = 0;
             let emptyCell = null;
             for (let i = 0; i < 5; i++) {
                 const index = row * 10 + col + i;
-                if (index >= 100) continue; // Bỏ qua nếu index vượt quá bảng
+                if (index >= 100) continue;
                 const cell = cells[index];
-                if (!cell) continue; // Bỏ qua nếu cell không tồn tại
+                if (!cell) continue;
                 if (cell.classList.contains(currentClass)) {
                     count++;
                 } else if (!cell.classList.contains('x') && !cell.classList.contains('o')) {
@@ -661,16 +672,15 @@ function checkFourInARow(currentClass) {
         }
     }
 
-    // Kiểm tra hàng dọc
     for (let col = 0; col < 10; col++) {
         for (let row = 0; row <= 5; row++) {
             let count = 0;
             let emptyCell = null;
             for (let i = 0; i < 5; i++) {
                 const index = (row + i) * 10 + col;
-                if (index >= 100) continue; // Bỏ qua nếu index vượt quá bảng
+                if (index >= 100) continue;
                 const cell = cells[index];
-                if (!cell) continue; // Bỏ qua nếu cell không tồn tại
+                if (!cell) continue;
                 if (cell.classList.contains(currentClass)) {
                     count++;
                 } else if (!cell.classList.contains('x') && !cell.classList.contains('o')) {
@@ -683,16 +693,15 @@ function checkFourInARow(currentClass) {
         }
     }
 
-    // Kiểm tra đường chéo xuống phải
     for (let row = 0; row <= 5; row++) {
         for (let col = 0; col <= 5; col++) {
             let count = 0;
             let emptyCell = null;
             for (let i = 0; i < 5; i++) {
                 const index = (row + i) * 10 + col + i;
-                if (index >= 100) continue; // Bỏ qua nếu index vượt quá bảng
+                if (index >= 100) continue;
                 const cell = cells[index];
-                if (!cell) continue; // Bỏ qua nếu cell không tồn tại
+                if (!cell) continue;
                 if (cell.classList.contains(currentClass)) {
                     count++;
                 } else if (!cell.classList.contains('x') && !cell.classList.contains('o')) {
@@ -705,16 +714,15 @@ function checkFourInARow(currentClass) {
         }
     }
 
-    // Kiểm tra đường chéo xuống trái
     for (let row = 0; row <= 5; row++) {
         for (let col = 4; col < 10; col++) {
             let count = 0;
             let emptyCell = null;
             for (let i = 0; i < 5; i++) {
                 const index = (row + i) * 10 + col - i;
-                if (index >= 100) continue; // Bỏ qua nếu index vượt quá bảng
+                if (index >= 100) continue;
                 const cell = cells[index];
-                if (!cell) continue; // Bỏ qua nếu cell không tồn tại
+                if (!cell) continue;
                 if (cell.classList.contains(currentClass)) {
                     count++;
                 } else if (!cell.classList.contains('x') && !cell.classList.contains('o')) {
@@ -730,7 +738,6 @@ function checkFourInARow(currentClass) {
     return null;
 }
 
-// Hàm lấy các ô trống xung quanh một ô
 function getAdjacentEmptyCells(cellIndex) {
     const row = Math.floor(cellIndex / 10);
     const col = cellIndex % 10;
@@ -753,22 +760,18 @@ function getAdjacentEmptyCells(cellIndex) {
     return emptyCells;
 }
 
-// Hàm lấy một ô ngẫu nhiên từ danh sách
 function getRandomCell(cellList) {
     return cellList[Math.floor(Math.random() * cellList.length)];
 }
 
-// Hàm lấy tất cả các ô trống
 function getAllEmptyCells() {
     return [...cells].filter(cell => 
         !cell.classList.contains('x') && !cell.classList.contains('o')
     );
 }
 
-// Hàm lấy các ô trung tâm còn trống
 function getCenterCells() {
     const centerCells = [];
-    // Lấy 9 ô ở giữa bảng (từ hàng 4-6, cột 4-6)
     for (let row = 4; row <= 6; row++) {
         for (let col = 4; col <= 6; col++) {
             const index = row * 10 + col;
@@ -781,33 +784,28 @@ function getCenterCells() {
     return centerCells;
 }
 
-// Hàm hiển thị thinking indicator
 function showThinkingIndicator() {
     thinkingIndicator.classList.add('show');
 }
 
-// Hàm ẩn thinking indicator
 function hideThinkingIndicator() {
     thinkingIndicator.classList.remove('show');
 }
 
-// Hàm lấy thời gian suy nghĩ ngẫu nhiên (2, 4, 6, 8 giây)
 function getRandomThinkingTime() {
     const times = [500, 1000, 1500, 2000, 2500, 3000];
     return times[Math.floor(Math.random() * times.length)];
 }
 
-// Hàm đánh giá điểm cho một vị trí
 function evaluatePosition(index, currentClass) {
     const row = Math.floor(index / 10);
     const col = index % 10;
     let score = 0;
 
-    // Kiểm tra 8 hướng
     const directions = [
-        [-1, -1], [-1, 0], [-1, 1], // Trên trái, trên, trên phải
-        [0, -1], [0, 1],           // Trái, phải
-        [1, -1], [1, 0], [1, 1]    // Dưới trái, dưới, dưới phải
+        [-1, -1], [-1, 0], [-1, 1],
+        [0, -1], [0, 1],
+        [1, -1], [1, 0], [1, 1]
     ];
 
     for (const [dx, dy] of directions) {
@@ -815,7 +813,6 @@ function evaluatePosition(index, currentClass) {
         let blocked = 0;
         let space = 0;
 
-        // Kiểm tra 4 ô liên tiếp theo mỗi hướng
         for (let step = 1; step <= 4; step++) {
             const newRow = row + dx * step;
             const newCol = col + dy * step;
@@ -836,85 +833,92 @@ function evaluatePosition(index, currentClass) {
             }
         }
 
-        // Tính điểm dựa trên số quân liên tiếp và không gian
-        if (count === 3 && space === 1 && blocked === 0) score += 1000;  // Cơ hội thắng
-        else if (count === 2 && space === 2 && blocked === 0) score += 100;  // Tiềm năng tốt
-        else if (count === 1 && space === 3 && blocked === 0) score += 10;   // Tiềm năng trung bình
+        if (count === 3 && space === 1 && blocked === 0) score += 1000;
+        else if (count === 2 && space === 2 && blocked === 0) score += 100;
+        else if (count === 1 && space === 3 && blocked === 0) score += 10;
     }
 
-    // Thêm điểm cho vị trí chiến lược
-    if ((row === 4 || row === 5) && (col === 4 || col === 5)) score += 5;  // Trung tâm
-    if (row >= 2 && row <= 7 && col >= 2 && col <= 7) score += 2;          // Khu vực giữa
+    if ((row === 4 || row === 5) && (col === 4 || col === 5)) score += 5;
+    if (row >= 2 && row <= 7 && col >= 2 && col <= 7) score += 2;
 
     return score;
 }
 
-// Cập nhật hàm findBestMove để xử lý theo độ khó
 function findBestMove() {
     const emptyCells = getAllEmptyCells();
     let bestScore = -1;
     let bestCell = null;
 
-    // Kiểm tra nước thắng ngay
     const winningMove = checkFourInARow('x');
     if (winningMove) return winningMove;
 
-    // Kiểm tra nước chặn thắng của đối thủ
     const blockingMove = checkFourInARow('o');
     if (blockingMove) return blockingMove;
 
-    // Xử lý theo độ khó
     if (computerDifficulty === '5' && Math.random() < 0.4) {
         return getRandomCell(emptyCells);
     }
 
-    // Đánh giá tất cả các ô trống
     for (const cell of emptyCells) {
         const index = parseInt(cell.dataset.index);
         
-        // Tính điểm tấn công (cho X)
         let attackScore = evaluatePosition(index, 'x');
         
-        // Tính điểm phòng thủ (cho O)
         let defenseScore = evaluatePosition(index, 'o');
         
-        // Điều chỉnh trọng số theo độ khó
         let totalScore;
         if (computerDifficulty === '5') {
-            // 5 tuổi: Ưu tiên phòng thủ hơn tấn công
             totalScore = attackScore * 0.8 + defenseScore * 1.2;
         } else if (computerDifficulty === '8') {
-            // 8 tuổi: Cân bằng giữa tấn công và phòng thủ, thiên về tấn công
             totalScore = attackScore * 1.2 + defenseScore;
-        } else {
-            // 20 tuổi: Tấn công mạnh mẽ và phòng thủ thông minh
+        } else if (computerDifficulty === '20') {
             totalScore = attackScore * 1.5 + defenseScore * 1.5;
             
-            // Thêm chiến thuật nâng cao cho độ khó 20
-            // 1. Ưu tiên tạo cơ hội thắng kép
             if (canCreateDoubleThreat(index, 'x')) {
                 totalScore *= 2;
             }
-            
-            // 2. Phát hiện và chặn cơ hội thắng kép của đối thủ
             if (canCreateDoubleThreat(index, 'o')) {
                 totalScore *= 1.8;
             }
-            
-            // 3. Ưu tiên các nước đi chiến lược
             if (isStrategicPosition(index)) {
                 totalScore *= 1.3;
             }
+        } else if (computerDifficulty === '24') {
+            totalScore = attackScore * 1.8 + defenseScore * 1.8;
+            
+            if (canCreateDoubleThreat(index, 'x')) {
+                totalScore *= 2.2;
+            }
+            if (canCreateDoubleThreat(index, 'o')) {
+                totalScore *= 2;
+            }
+            if (isStrategicPosition(index)) {
+                totalScore *= 1.5;
+            }
+        } else if (computerDifficulty === '36') {
+            totalScore = attackScore * 2.0 + defenseScore * 2.0;
+            
+            if (canCreateDoubleThreat(index, 'x')) {
+                totalScore *= 2.5;
+            }
+            if (canCreateDoubleThreat(index, 'o')) {
+                totalScore *= 2.3;
+            }
+            if (isStrategicPosition(index)) {
+                totalScore *= 1.8;
+            }
+            
+            if (canCreateTripleThreat(index, 'x')) {
+                totalScore *= 3;
+            }
         }
 
-        // Cập nhật nước đi tốt nhất
         if (totalScore > bestScore) {
             bestScore = totalScore;
             bestCell = cell;
         }
     }
 
-    // Nếu không tìm được nước đi tốt, chọn ngẫu nhiên từ các ô trung tâm
     if (!bestCell || bestScore === 0) {
         const centerCells = getCenterCells();
         if (centerCells.length > 0) {
@@ -926,13 +930,11 @@ function findBestMove() {
     return bestCell;
 }
 
-// Thêm hàm kiểm tra khả năng tạo thế thắng kép
 function canCreateDoubleThreat(index, symbol) {
     const row = Math.floor(index / 10);
     const col = index % 10;
     let threatCount = 0;
 
-    // Kiểm tra 8 hướng
     const directions = [
         [-1, -1], [-1, 0], [-1, 1],
         [0, -1], [0, 1],
@@ -944,7 +946,6 @@ function canCreateDoubleThreat(index, symbol) {
         let space = 0;
         let blocked = 0;
 
-        // Kiểm tra 4 ô liên tiếp theo mỗi hướng
         for (let step = 1; step <= 4; step++) {
             const newRow = row + dx * step;
             const newCol = col + dy * step;
@@ -965,26 +966,22 @@ function canCreateDoubleThreat(index, symbol) {
             }
         }
 
-        // Đếm số cơ hội thắng tiềm năng
         if (count >= 2 && space >= 2 && blocked === 0) {
             threatCount++;
         }
     }
 
-    return threatCount >= 2; // Trả về true nếu có thể tạo ít nhất 2 mối đe dọa
+    return threatCount >= 2;
 }
 
-// Thêm hàm đánh giá vị trí chiến lược
 function isStrategicPosition(index) {
     const row = Math.floor(index / 10);
     const col = index % 10;
     
-    // Vị trí trung tâm mở rộng (3x3 ô giữa)
     if (row >= 3 && row <= 6 && col >= 3 && col <= 6) {
         return true;
     }
     
-    // Vị trí có thể tạo nhiều hướng tấn công
     let openDirections = 0;
     const directions = [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]];
     
@@ -1002,17 +999,59 @@ function isStrategicPosition(index) {
         if (hasSpace) openDirections++;
     }
     
-    return openDirections >= 4; // Trả về true nếu có ít nhất 4 hướng mở
+    return openDirections >= 4;
 }
 
-// Thêm hàm để load trước âm thanh
+function canCreateTripleThreat(index, symbol) {
+    const row = Math.floor(index / 10);
+    const col = index % 10;
+    let threatCount = 0;
+
+    const directions = [
+        [-1, -1], [-1, 0], [-1, 1],
+        [0, -1], [0, 1],
+        [1, -1], [1, 0], [1, 1]
+    ];
+
+    for (const [dx, dy] of directions) {
+        let count = 0;
+        let space = 0;
+        let blocked = 0;
+
+        for (let step = 1; step <= 4; step++) {
+            const newRow = row + dx * step;
+            const newCol = col + dy * step;
+            
+            if (newRow < 0 || newRow >= 10 || newCol < 0 || newCol >= 10) {
+                blocked++;
+                break;
+            }
+
+            const cell = cells[newRow * 10 + newCol];
+            if (cell.classList.contains(symbol)) {
+                count++;
+            } else if (!cell.classList.contains('x') && !cell.classList.contains('o')) {
+                space++;
+            } else {
+                blocked++;
+                break;
+            }
+        }
+
+        if (count >= 3 && space >= 1 && blocked === 0) {
+            threatCount++;
+        }
+    }
+
+    return threatCount >= 3;
+}
+
 function preloadSounds() {
     setupAudio(winSounds);
     setupAudio(loseAudios);
     setupAudio(moveSounds);
 }
 
-// Tách logic cập nhật mảng âm thanh thành hàm riêng
 function updateSoundArrays(isEnabled) {
     isSoundEnabled = isEnabled;
     const allSounds = [...winSounds, ...loseAudios, ...moveSounds];
@@ -1021,7 +1060,6 @@ function updateSoundArrays(isEnabled) {
     });
 }
 
-// Cập nhật hàm computerPlay
 function computerPlay() {
     if (!gameActive || !isComputerMode || !isPlayer1Turn) return;
 
@@ -1047,10 +1085,8 @@ function computerPlay() {
         }
 
         if (cellToPlay) {
-            // Kiểm tra xem nước đi này có phải là nước thắng không
             const willWin = checkWinningMove(cellToPlay, 'x');
             
-            // Chỉ phát âm thanh di chuyển nếu không phải nước thắng
             if (!willWin) {
                 playMoveSound();
             }
@@ -1060,31 +1096,49 @@ function computerPlay() {
     }, isFirstMove ? 0 : getRandomThinkingTime());
 }
 
-// Thêm hàm kiểm tra nước đi thắng
 function checkWinningMove(cell, symbol) {
-    // Lưu trạng thái hiện tại của ô
     const originalClass = cell.className;
     
-    // Thử đánh vào ô đó
     cell.classList.add(symbol);
     
-    // Kiểm tra xem có thắng không
     const isWinning = checkWin(symbol);
     
-    // Khôi phục trạng thái của ô
     cell.className = originalClass;
     
     return isWinning;
 }
 
-// Khởi tạo khi trang được load
+function savePlayerInfo(playerNumber, name, avatar) {
+    if (!isComputerMode || playerNumber === 2) {
+        localStorage.setItem(`player${playerNumber}Name`, name);
+        localStorage.setItem(`player${playerNumber}Avatar`, avatar);
+    }
+}
+
+function loadPlayerInfo() {
+    if (!isComputerMode) {
+        const savedName1 = localStorage.getItem('player1Name');
+        const savedAvatar1 = localStorage.getItem('player1Avatar');
+        if (savedName1) player1NameInput.value = savedName1;
+        if (savedAvatar1) {
+            document.querySelector('.player-1 .current-avatar').className = `current-avatar fa-solid ${savedAvatar1} fa-6x`;
+        }
+    }
+
+    const savedName2 = localStorage.getItem('player2Name');
+    const savedAvatar2 = localStorage.getItem('player2Avatar');
+    if (savedName2) player2NameInput.value = savedName2;
+    if (savedAvatar2) {
+        document.querySelector('.player-2 .current-avatar').className = `current-avatar fa-solid ${savedAvatar2} fa-6x`;
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     initializeBoard();
     preloadSounds();
 });
 
 function initializeBoard() {
-    // Tạo bảng 10x10
     for (let i = 0; i < 100; i++) {
         const cell = document.createElement('div');
         cell.classList.add('cell');
@@ -1094,53 +1148,84 @@ function initializeBoard() {
 
     cells = document.querySelectorAll('.cell');
 
-    // Thêm listbox độ khó và checkbox âm thanh vào button-container
     const buttonContainer = document.querySelector('.button-container');
     if (buttonContainer) {
-        // Thêm listbox độ khó (bên trái)
         const difficultyControl = document.createElement('div');
         difficultyControl.className = 'difficulty-select control-item';
         difficultyControl.style.display = 'none';
         difficultyControl.innerHTML = `
-            <label for="difficulty">Máy:</label>
             <select id="difficulty">
-                <option value="5" ${computerDifficulty === '5' ? 'selected' : ''}>5 tuổi</option>
-                <option value="8" ${computerDifficulty === '8' ? 'selected' : ''}>8 tuổi</option>
-                <option value="20" ${computerDifficulty === '20' ? 'selected' : ''}>20 tuổi</option>
+                <option value="5" ${computerDifficulty === '5' ? 'selected' : ''}>Bé Mèo Con</option>
+                <option value="8" ${computerDifficulty === '8' ? 'selected' : ''}>Anh Cún Con</option>
+                <option value="20" ${computerDifficulty === '20' ? 'selected' : ''}>Cô Lười Lém</option>
+                <option value="24" ${computerDifficulty === '24' ? 'selected' : ''}>Bác Hà Mã</option>
+                <option value="36" ${computerDifficulty === '36' ? 'selected' : ''}>Cao thủ Rồng</option>
             </select>
         `;
         buttonContainer.appendChild(difficultyControl);
 
-        // Thêm checkbox âm thanh (bên phải)
         const soundControl = document.createElement('div');
         soundControl.className = 'sound-checkbox control-item';
-        soundControl.style.display = 'none'; // Ẩn mặc định
+        soundControl.style.display = 'none';
         soundControl.innerHTML = `
-            <input type="checkbox" id="sound-toggle" ${isSoundEnabled ? 'checked' : ''}>
-            <label for="sound-toggle">Giọng nói</label>
+            <button id="sound-toggle" class="voice-btn ${isSoundEnabled ? 'active' : ''}">
+                <i class="fa-solid fa-microphone-lines"></i>
+            </button>
         `;
         buttonContainer.appendChild(soundControl);
 
-        // Thêm sự kiện cho checkbox âm thanh
         const soundToggle = document.getElementById('sound-toggle');
-        soundToggle.addEventListener('change', function() {
-            localStorage.setItem('isSoundEnabled', this.checked);
-            updateSoundArrays(this.checked);
+        soundToggle.addEventListener('click', function() {
+            this.classList.toggle('active');
+            const isEnabled = this.classList.contains('active');
+            localStorage.setItem('isSoundEnabled', isEnabled);
+            updateSoundArrays(isEnabled);
         });
 
-        // Thêm sự kiện cho listbox độ khó
         const difficultySelect = document.getElementById('difficulty');
         difficultySelect.addEventListener('change', function() {
             computerDifficulty = this.value;
             localStorage.setItem('computerDifficulty', this.value);
+            
+            if (isComputerMode) {
+                let computerAvatar;
+                let computerName;
+                switch(this.value) {
+                    case '5':
+                        computerAvatar = 'fa-cat';
+                        computerName = "Bé Mèo Con";
+                        break;
+                    case '8':
+                        computerAvatar = 'fa-dog';
+                        computerName = "Anh Cún Con";
+                        break;
+                    case '20':
+                        computerAvatar = 'fa-otter';
+                        computerName = "Cô Lười Lém";
+                        break;
+                    case '24':
+                        computerAvatar = 'fa-hippo';
+                        computerName = "Bác Hà Mã";
+                        break;
+                    case '36':
+                        computerAvatar = 'fa-dragon';
+                        computerName = "Cao thủ Rồng";
+                        break;
+                    default:
+                        computerAvatar = 'fa-cat';
+                        computerName = "Bé Mèo Con";
+                }
+                document.querySelector('.player-1 .current-avatar').className = `current-avatar fa-solid ${computerAvatar} fa-6x`;
+                player1NameInput.value = computerName;
+            }
         });
 
-        // Khởi tạo trạng thái âm thanh
         updateSoundArrays(isSoundEnabled);
     }
+
+    loadPlayerInfo();
 }
 
-// Thiết lập preload và volume cho tất cả âm thanh
 function setupAudio(audioArray) {
     audioArray.forEach(audio => {
         audio.preload = 'auto';
@@ -1148,7 +1233,6 @@ function setupAudio(audioArray) {
     });
 }
 
-// Hàm phát âm thanh an toàn
 function playAudioSafely(audio) {
     if (!isSoundEnabled) return;
     
@@ -1162,21 +1246,18 @@ function playAudioSafely(audio) {
     }
 }
 
-// Hàm phát âm thanh chiến thắng
 function playWinSound() {
     if (!isSoundEnabled) return;
     const randomSound = winSounds[Math.floor(Math.random() * winSounds.length)];
     playAudioSafely(randomSound);
 }
 
-// Hàm phát âm thanh thua cuộc
 function playLoseSound() {
     if (!isSoundEnabled) return;
     const randomSound = loseAudios[Math.floor(Math.random() * loseAudios.length)];
     playAudioSafely(randomSound);
 }
 
-// Hàm phát âm thanh di chuyển
 function playMoveSound() {
     if (!gameActive || !isSoundEnabled) return;
     const randomSound = moveSounds[Math.floor(Math.random() * moveSounds.length)];
