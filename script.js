@@ -1165,7 +1165,7 @@ function initializeBoard() {
         buttonContainer.appendChild(difficultyControl);
 
         const soundControl = document.createElement('div');
-        soundControl.className = 'sound-checkbox control-item';
+        soundControl.className = 'sound-checkbox';
         soundControl.style.display = 'none';
         soundControl.innerHTML = `
             <button id="sound-toggle" class="voice-btn ${isSoundEnabled ? 'active' : ''}">

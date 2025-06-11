@@ -482,7 +482,7 @@ h1 {
 }
 
 .sound-checkbox {
-    margin-left: 80px;
+    margin-left: 8px;
 }
 
 /* Trang trí checkbox âm thanh */
@@ -490,7 +490,7 @@ h1 {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 6px 12px;
+    padding: 5px 5px;
     background: #fff;
     border-radius: 20px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
@@ -1168,7 +1168,7 @@ h1 {
     background: none;
     border: none;
     cursor: pointer;
-    padding: 4px;
+    padding: 2px;
     font-size: 16px;
     color: #999;
     transition: color 0.2s;
