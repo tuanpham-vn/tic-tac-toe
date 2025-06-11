@@ -20,6 +20,7 @@ body {
 }
 
 .game-container {
+    position: relative;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -947,7 +948,7 @@ h1 {
 
 /* Visitor badge styles */
 .visitor-badge {
-    position: fixed;
+    position: absolute;
     bottom: 10px;
     right: 10px;
     z-index: 1000;
