@@ -1157,7 +1157,7 @@ function initializeBoard() {
             <select id="difficulty">
                 <option value="5" ${computerDifficulty === '5' ? 'selected' : ''}>Bé Mèo Con</option>
                 <option value="8" ${computerDifficulty === '8' ? 'selected' : ''}>Anh Cún Con</option>
-                <option value="20" ${computerDifficulty === '20' ? 'selected' : ''}>Cô Lười Lém</option>
+                <option value="20" ${computerDifficulty === '20' ? 'selected' : ''}>Chú Lười Lém</option>
                 <option value="24" ${computerDifficulty === '24' ? 'selected' : ''}>Bác Hà Mã</option>
                 <option value="36" ${computerDifficulty === '36' ? 'selected' : ''}>Cao thủ Rồng</option>
             </select>
@@ -1201,7 +1201,7 @@ function initializeBoard() {
                         break;
                     case '20':
                         computerAvatar = 'fa-otter';
-                        computerName = "Cô Lười Lém";
+                        computerName = "Chú Lười Lém";
                         break;
                     case '24':
                         computerAvatar = 'fa-hippo';
