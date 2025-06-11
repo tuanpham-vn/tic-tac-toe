@@ -863,7 +863,7 @@ function findBestMove() {
     const blockingMove = checkFourInARow('o');
     if (blockingMove) return blockingMove;
 
-    // Nếu là độ khó 5 tuổi, đôi khi bỏ qua nước đi tốt nhất
+    // Xử lý theo độ khó
     if (computerDifficulty === '5' && Math.random() < 0.4) {
         return getRandomCell(emptyCells);
     }
@@ -883,9 +883,28 @@ function findBestMove() {
         if (computerDifficulty === '5') {
             // 5 tuổi: Ưu tiên phòng thủ hơn tấn công
             totalScore = attackScore * 0.8 + defenseScore * 1.2;
-        } else {
+        } else if (computerDifficulty === '8') {
             // 8 tuổi: Cân bằng giữa tấn công và phòng thủ, thiên về tấn công
             totalScore = attackScore * 1.2 + defenseScore;
+        } else {
+            // 20 tuổi: Tấn công mạnh mẽ và phòng thủ thông minh
+            totalScore = attackScore * 1.5 + defenseScore * 1.5;
+            
+            // Thêm chiến thuật nâng cao cho độ khó 20
+            // 1. Ưu tiên tạo cơ hội thắng kép
+            if (canCreateDoubleThreat(index, 'x')) {
+                totalScore *= 2;
+            }
+            
+            // 2. Phát hiện và chặn cơ hội thắng kép của đối thủ
+            if (canCreateDoubleThreat(index, 'o')) {
+                totalScore *= 1.8;
+            }
+            
+            // 3. Ưu tiên các nước đi chiến lược
+            if (isStrategicPosition(index)) {
+                totalScore *= 1.3;
+            }
         }
 
         // Cập nhật nước đi tốt nhất
@@ -907,47 +926,83 @@ function findBestMove() {
     return bestCell;
 }
 
-// Thiết lập preload và volume cho tất cả âm thanh
-function setupAudio(audioArray) {
-    audioArray.forEach(audio => {
-        audio.preload = 'auto';
-        audio.volume = 0.5;
-    });
-}
+// Thêm hàm kiểm tra khả năng tạo thế thắng kép
+function canCreateDoubleThreat(index, symbol) {
+    const row = Math.floor(index / 10);
+    const col = index % 10;
+    let threatCount = 0;
 
-// Hàm phát âm thanh an toàn
-function playAudioSafely(audio) {
-    if (!isSoundEnabled) return;
-    
-    audio.currentTime = 0;
-    const playPromise = audio.play();
-    
-    if (playPromise !== undefined) {
-        playPromise.catch(error => {
-            console.log("Playback prevented:", error);
-        });
+    // Kiểm tra 8 hướng
+    const directions = [
+        [-1, -1], [-1, 0], [-1, 1],
+        [0, -1], [0, 1],
+        [1, -1], [1, 0], [1, 1]
+    ];
+
+    for (const [dx, dy] of directions) {
+        let count = 0;
+        let space = 0;
+        let blocked = 0;
+
+        // Kiểm tra 4 ô liên tiếp theo mỗi hướng
+        for (let step = 1; step <= 4; step++) {
+            const newRow = row + dx * step;
+            const newCol = col + dy * step;
+            
+            if (newRow < 0 || newRow >= 10 || newCol < 0 || newCol >= 10) {
+                blocked++;
+                break;
+            }
+
+            const cell = cells[newRow * 10 + newCol];
+            if (cell.classList.contains(symbol)) {
+                count++;
+            } else if (!cell.classList.contains('x') && !cell.classList.contains('o')) {
+                space++;
+            } else {
+                blocked++;
+                break;
+            }
+        }
+
+        // Đếm số cơ hội thắng tiềm năng
+        if (count >= 2 && space >= 2 && blocked === 0) {
+            threatCount++;
+        }
     }
+
+    return threatCount >= 2; // Trả về true nếu có thể tạo ít nhất 2 mối đe dọa
 }
 
-// Hàm phát âm thanh chiến thắng
-function playWinSound() {
-    if (!isSoundEnabled) return;
-    const randomSound = winSounds[Math.floor(Math.random() * winSounds.length)];
-    playAudioSafely(randomSound);
-}
-
-// Hàm phát âm thanh thua cuộc
-function playLoseSound() {
-    if (!isSoundEnabled) return;
-    const randomSound = loseAudios[Math.floor(Math.random() * loseAudios.length)];
-    playAudioSafely(randomSound);
-}
-
-// Hàm phát âm thanh di chuyển
-function playMoveSound() {
-    if (!gameActive || !isSoundEnabled) return;
-    const randomSound = moveSounds[Math.floor(Math.random() * moveSounds.length)];
-    playAudioSafely(randomSound);
+// Thêm hàm đánh giá vị trí chiến lược
+function isStrategicPosition(index) {
+    const row = Math.floor(index / 10);
+    const col = index % 10;
+    
+    // Vị trí trung tâm mở rộng (3x3 ô giữa)
+    if (row >= 3 && row <= 6 && col >= 3 && col <= 6) {
+        return true;
+    }
+    
+    // Vị trí có thể tạo nhiều hướng tấn công
+    let openDirections = 0;
+    const directions = [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]];
+    
+    for (const [dx, dy] of directions) {
+        let hasSpace = true;
+        for (let step = 1; step <= 4; step++) {
+            const newRow = row + dx * step;
+            const newCol = col + dy * step;
+            
+            if (newRow < 0 || newRow >= 10 || newCol < 0 || newCol >= 10) {
+                hasSpace = false;
+                break;
+            }
+        }
+        if (hasSpace) openDirections++;
+    }
+    
+    return openDirections >= 4; // Trả về true nếu có ít nhất 4 hướng mở
 }
 
 // Thêm hàm để load trước âm thanh
@@ -1045,12 +1100,13 @@ function initializeBoard() {
         // Thêm listbox độ khó (bên trái)
         const difficultyControl = document.createElement('div');
         difficultyControl.className = 'difficulty-select control-item';
-        difficultyControl.style.display = 'none'; // Ẩn mặc định
+        difficultyControl.style.display = 'none';
         difficultyControl.innerHTML = `
             <label for="difficulty">Máy:</label>
             <select id="difficulty">
                 <option value="5" ${computerDifficulty === '5' ? 'selected' : ''}>5 tuổi</option>
                 <option value="8" ${computerDifficulty === '8' ? 'selected' : ''}>8 tuổi</option>
+                <option value="20" ${computerDifficulty === '20' ? 'selected' : ''}>20 tuổi</option>
             </select>
         `;
         buttonContainer.appendChild(difficultyControl);
@@ -1082,4 +1138,47 @@ function initializeBoard() {
         // Khởi tạo trạng thái âm thanh
         updateSoundArrays(isSoundEnabled);
     }
+}
+
+// Thiết lập preload và volume cho tất cả âm thanh
+function setupAudio(audioArray) {
+    audioArray.forEach(audio => {
+        audio.preload = 'auto';
+        audio.volume = 0.5;
+    });
+}
+
+// Hàm phát âm thanh an toàn
+function playAudioSafely(audio) {
+    if (!isSoundEnabled) return;
+    
+    audio.currentTime = 0;
+    const playPromise = audio.play();
+    
+    if (playPromise !== undefined) {
+        playPromise.catch(error => {
+            console.log("Playback prevented:", error);
+        });
+    }
+}
+
+// Hàm phát âm thanh chiến thắng
+function playWinSound() {
+    if (!isSoundEnabled) return;
+    const randomSound = winSounds[Math.floor(Math.random() * winSounds.length)];
+    playAudioSafely(randomSound);
+}
+
+// Hàm phát âm thanh thua cuộc
+function playLoseSound() {
+    if (!isSoundEnabled) return;
+    const randomSound = loseAudios[Math.floor(Math.random() * loseAudios.length)];
+    playAudioSafely(randomSound);
+}
+
+// Hàm phát âm thanh di chuyển
+function playMoveSound() {
+    if (!gameActive || !isSoundEnabled) return;
+    const randomSound = moveSounds[Math.floor(Math.random() * moveSounds.length)];
+    playAudioSafely(randomSound);
 } 
