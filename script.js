@@ -274,7 +274,7 @@ function startGame(withComputer = false) {
                 break;
             case '20':
                 computerAvatar = 'fa-otter';
-                player1NameInput.value = "Cô Lười Lém";
+                player1NameInput.value = "Chú Lười Lém";
                 break;
             case '24':
                 computerAvatar = 'fa-hippo';
