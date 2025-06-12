@@ -884,7 +884,7 @@ function findBestMove() {
                 totalScore *= 1.3;
             }
         } else if (computerDifficulty === '24') {
-            totalScore = attackScore * 1.8 + defenseScore * 1.8;
+            totalScore = attackScore * 2.0 + defenseScore * 1.8;
             
             if (canCreateDoubleThreat(index, 'x')) {
                 totalScore *= 2.2;
@@ -896,7 +896,7 @@ function findBestMove() {
                 totalScore *= 1.5;
             }
         } else if (computerDifficulty === '36') {
-            totalScore = attackScore * 2.0 + defenseScore * 2.0;
+            totalScore = attackScore * 2.2 + defenseScore * 2.0;
             
             if (canCreateDoubleThreat(index, 'x')) {
                 totalScore *= 2.5;
