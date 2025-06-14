@@ -896,21 +896,33 @@ function findBestMove() {
                 totalScore *= 1.5;
             }
         } else if (computerDifficulty === '36') {
+            // Base score với hệ số tấn công và phòng thủ cao
             totalScore = attackScore * 2.2 + defenseScore * 2.0;
             
+            // Xử lý double threat cho cả tấn công và phòng thủ
             if (canCreateDoubleThreat(index, 'x')) {
                 totalScore *= 2.5;
             }
             if (canCreateDoubleThreat(index, 'o')) {
                 totalScore *= 2.3;
             }
-            if (isStrategicPosition(index)) {
-                totalScore *= 1.8;
-            }
             
+            // Xử lý triple threat cho cả tấn công và phòng thủ
             if (canCreateTripleThreat(index, 'x')) {
                 totalScore *= 3;
             }
+            if (canCreateTripleThreat(index, 'o')) {
+                totalScore *= 2.8; // Triple threat phòng thủ
+            }
+            
+            // Thêm trọng số cho vị trí chiến lược
+            if (isStrategicPosition(index)) {
+                totalScore *= 2.0;
+            }
+            
+            // Thêm yếu tố ngẫu nhiên nhỏ (±10%) để AI không quá máy móc
+            const randomFactor = 0.9 + Math.random() * 0.2; // Random từ 0.9 đến 1.1
+            totalScore *= randomFactor;
         }
 
         if (totalScore > bestScore) {
