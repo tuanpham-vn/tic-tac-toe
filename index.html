@@ -24,7 +24,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Coiny&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="tic-tac-toe.css?v=20240320">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
     <style>
         .audio-preload {
@@ -95,7 +95,6 @@
                 </div>
                 <input type="text" class="player-name" id="player1Name" placeholder="Nhập tên người chơi 1" maxlength="20" value="Méo">
                 <h2>Đánh (X)</h2>
-                <div class="score" id="score-1">0</div>
             </div>
         </div>
 
@@ -109,7 +108,19 @@
             <div class="button-container">
                 <button id="start-btn" class="btn">Chơi 2 Người</button>
                 <button id="play-with-computer-btn" class="btn">Chơi với Máy</button>
-                <button id="restart-btn" class="btn" style="display: none;">Chơi Lại</button>
+                <div class="difficulty-select">
+                    <select id="difficulty">
+                        <option value="5">Bé Mèo Con</option>
+                        <option value="8">Anh Cún Con</option>
+                        <option value="20">Chú Lười Lém</option>
+                        <option value="24">Bác Hà Mã</option>
+                        <option value="36">Cao thủ Rồng</option>
+                    </select>
+                </div>
+                <button id="restart-btn" class="btn">Chơi Lại</button>
+                <button id="sound-toggle" class="voice-btn">
+                    <i class="fa-solid fa-microphone-lines"></i>
+                </button>
             </div>
             
             <div class="board" id="board">
@@ -119,6 +130,15 @@
                 <i class="fa-solid fa-brain"></i>
             </div>
             <div id="turn-info" class="turn-info">Lượt của: Méo (X)</div>
+            
+            <div class="score-container">
+                <div class="score player1-score">
+                    <span id="score-1" class="score-value">0</span>
+                </div>
+                <div class="score player2-score">
+                    <span id="score-2" class="score-value">0</span>
+                </div>
+            </div>
 
             <div id="winning-message" class="winning-message">
                 <div class="winning-text"></div>
@@ -144,7 +164,6 @@
                 </div>
                 <input type="text" class="player-name" id="player2Name" placeholder="Nhập tên người chơi 2" maxlength="20" value="Cù">
                 <h2>Đánh (O)</h2>
-                <div class="score" id="score-2">0</div>
             </div>
             <div class="visitor-badge">
                 <a href="https://visitorbadge.io/status?path=https%3A%2F%2Fphamtuan.github.io%2Ftic-tac-toe">
@@ -154,6 +173,6 @@
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <script src="tic-tac-toe.js?v=2024012331230"></script>
 </body>
 </html> 

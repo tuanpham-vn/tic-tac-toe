@@ -140,6 +140,9 @@ avatarOptions.forEach(options => {
             if (!isComputerMode || playerNumber === 2) {
                 const playerName = playerNumber === 1 ? player1NameInput.value : player2NameInput.value;
                 savePlayerInfo(playerNumber, playerName, avatar);
+                
+                // Cập nhật avatar trong game-area
+                updateGameAreaAvatars();
             }
         });
     });
@@ -185,6 +188,13 @@ for (let i = 0; i < 6; i++) {
         }
     }
 }
+
+// Thêm hằng số cho localStorage keys
+const STORAGE_KEYS = {
+    DIFFICULTY: 'ticTacToe_difficulty',
+    PLAYER1_NAME: 'ticTacToe_player1Name',
+    PLAYER2_NAME: 'ticTacToe_player2Name'
+};
 
 function getPlayerName(playerNumber) {
     const input = playerNumber === 1 ? player1NameInput : player2NameInput;
@@ -248,70 +258,68 @@ function startGame(withComputer = false) {
 
     isComputerMode = withComputer;
     
+    // Ẩn các nút bắt đầu
+    startButton.style.display = 'none';
+    playWithComputerButton.style.display = 'none';
+    
+    // Hiển thị các nút điều khiển trong game
+    const difficultySelect = document.querySelector('.difficulty-select');
+    const restartBtn = document.getElementById('restart-btn');
+    const soundToggle = document.getElementById('sound-toggle');
+    
     if (withComputer) {
         player1NameInput.disabled = true;
         
-        const difficultyControl = document.querySelector('.difficulty-select');
-        if (difficultyControl) {
-            difficultyControl.style.display = 'block';
-            const selectElement = difficultyControl.querySelector('select');
+        if (difficultySelect) {
+            difficultySelect.classList.add('show');
+            const selectElement = difficultySelect.querySelector('select');
             if (selectElement) {
                 selectElement.className = 'computer-player';
-                selectElement.style.color = '#f44336';
-                selectElement.style.fontWeight = 'bold';
             }
         }
         
-        let computerAvatar;
-        switch(computerDifficulty) {
-            case '5':
-                computerAvatar = 'fa-cat';
-                player1NameInput.value = "Bé Mèo Con";
-                break;
-            case '8':
-                computerAvatar = 'fa-dog';
-                player1NameInput.value = "Anh Cún Con";
-                break;
-            case '20':
-                computerAvatar = 'fa-otter';
-                player1NameInput.value = "Chú Lười Lém";
-                break;
-            case '24':
-                computerAvatar = 'fa-hippo';
-                player1NameInput.value = "Bác Hà Mã";
-                break;
-            case '36':
-                computerAvatar = 'fa-dragon';
-                player1NameInput.value = "Cao thủ Rồng";
-                break;
-            default:
-                computerAvatar = 'fa-cat';
-                player1NameInput.value = "Bé Mèo Con";
-        }
-        
-        document.querySelector('.player-1 .current-avatar').className = `current-avatar fa-solid ${computerAvatar} fa-6x`;
+        const computerInfo = getComputerInfoByDifficulty(computerDifficulty);
+        player1NameInput.value = computerInfo.name;
+        document.querySelector('.player-1 .current-avatar').className = `current-avatar fa-solid ${computerInfo.avatar} fa-6x`;
         document.querySelector('.player-1 .avatar-selector').style.pointerEvents = 'none';
+        
+        // Hiển thị nút chơi lại và nút âm thanh
+        restartBtn.classList.add('show');
+        soundToggle.classList.add('show');
+        
+        // Căn giữa các nút điều khiển
+        const controlsContainer = document.querySelector('.game-controls');
+        if (controlsContainer) {
+            controlsContainer.style.justifyContent = 'space-between';
+        }
     } else {
         loadPlayerInfo();
-
         player1NameInput.disabled = false;
-        player1NameInput.value = "Méo";
 
-        const difficultyControl = document.querySelector('.difficulty-select');
-        if (difficultyControl) {
-            difficultyControl.style.display = 'none';
-            const selectElement = difficultyControl.querySelector('select');
+        if (difficultySelect) {
+            difficultySelect.classList.remove('show');
+            const selectElement = difficultySelect.querySelector('select');
             if (selectElement) {
                 selectElement.className = '';
-                selectElement.style.color = '';
-                selectElement.style.fontWeight = '';
             }
-            document.querySelector('.button-container').appendChild(difficultyControl);
         }
 
         document.querySelector('.player-1 .current-avatar').className = 'current-avatar fa-solid fa-cat fa-6x';
         document.querySelector('.player-1 .avatar-selector').style.pointerEvents = 'auto';
+        
+        // Chỉ hiển thị nút chơi lại và căn giữa
+        restartBtn.classList.add('show');
+        soundToggle.classList.remove('show');
+        
+        // Căn giữa nút chơi lại
+        const controlsContainer = document.querySelector('.game-controls');
+        if (controlsContainer) {
+            controlsContainer.style.justifyContent = 'center';
+        }
     }
+    
+    // Cập nhật avatar trên game-area
+    updateGameAreaAvatars();
 
     if (!player2NameInput.value.trim()) {
         alert('Vui lòng nhập tên người chơi!');
@@ -339,16 +347,6 @@ function startGame(withComputer = false) {
     });
 
     updateTurnInfo();
-    startButton.style.display = 'none';
-    playWithComputerButton.style.display = 'none';
-    restartButton.style.display = 'block';
-
-    const difficultyControl = document.querySelector('.difficulty-select');
-    const soundControl = document.querySelector('.sound-checkbox');
-    if (difficultyControl && soundControl) {
-        difficultyControl.style.display = withComputer ? 'flex' : 'none';
-        soundControl.style.display = withComputer ? 'flex' : 'none';
-    }
 
     if (withComputer && isPlayer1Turn) {
         setTimeout(computerPlay, isFirstGame ? 0 : 500);
@@ -586,23 +584,36 @@ function endGame(draw) {
 }
 
 function restartGame() {
+    // Hiển thị lại các nút bắt đầu
     startButton.style.display = 'block';
     playWithComputerButton.style.display = 'block';
-    restartButton.style.display = 'none';
+    
+    // Ẩn các nút điều khiển
+    const difficultySelect = document.querySelector('.difficulty-select');
+    const restartBtn = document.getElementById('restart-btn');
+    const soundToggle = document.getElementById('sound-toggle');
+    
+    difficultySelect.classList.remove('show');
+    restartBtn.classList.remove('show');
+    soundToggle.classList.remove('show');
+    
     gameActive = false;
     isFirstGame = true;
     
-    const difficultyControl = document.querySelector('.difficulty-select');
-    const soundControl = document.querySelector('.sound-checkbox');
-    if (difficultyControl && soundControl) {
-        difficultyControl.style.display = 'none';
-        soundControl.style.display = 'none';
-    }
+    // Khôi phục thông tin player 1 từ localStorage hoặc mặc định
+    const savedPlayer1Name = localStorage.getItem('player1Name') || "Méo";
+    const savedPlayer1Avatar = localStorage.getItem('player1Avatar') || "fa-cat";
     
-    if (isComputerMode) {
-        player1NameInput.disabled = false;
-        document.querySelector('.player-1 .avatar-selector').style.pointerEvents = 'auto';
-    }
+    player1NameInput.disabled = false;
+    player1NameInput.value = savedPlayer1Name;
+    document.querySelector('.player-1 .current-avatar').className = `current-avatar fa-solid ${savedPlayer1Avatar} fa-6x`;
+    document.querySelector('.player-1 .avatar-selector').style.pointerEvents = 'auto';
+    
+    // Reset computer mode
+    isComputerMode = false;
+    
+    // Cập nhật avatar trên game-area
+    updateGameAreaAvatars();
 
     cells.forEach(cell => {
         cell.classList.remove('x', 'o', 'winning', 'last-move');
@@ -631,10 +642,24 @@ function restartGame() {
 function playAgain() {
     isFirstGame = false;
     startGame(isComputerMode);
+    updateGameAreaAvatars();
 }
 
 startButton.addEventListener('click', () => startGame(false));
-playWithComputerButton.addEventListener('click', () => startGame(true));
+playWithComputerButton.addEventListener('click', () => {
+    // Log thông tin trước khi bắt đầu game với máy
+    const currentDifficulty = document.getElementById('difficulty').value;
+    const currentAvatarName = player1NameInput.value;
+    const selectedDifficultyText = document.getElementById('difficulty').options[document.getElementById('difficulty').selectedIndex].text;
+    
+    console.log('=== Thông tin chế độ chơi với máy ===');
+    console.log('Độ khó đang chọn:', currentDifficulty);
+    console.log('Tên hiển thị ở avatar:', currentAvatarName);
+    console.log('Text hiển thị ở listbox độ khó:', selectedDifficultyText);
+    console.log('=====================================');
+    
+    startGame(true);
+});
 restartButton.addEventListener('click', restartGame);
 playAgainButton.addEventListener('click', playAgain);
 
@@ -849,73 +874,133 @@ function findBestMove() {
     let bestScore = -1;
     let bestCell = null;
 
+    // Ưu tiên tuyệt đối: thắng ngay
     const winningMove = checkFourInARow('x');
     if (winningMove) return winningMove;
 
+    // Ưu tiên cao: chặn đối thủ thắng
     const blockingMove = checkFourInARow('o');
     if (blockingMove) return blockingMove;
 
-    if (computerDifficulty === '5' && Math.random() < 0.4) {
+    // Bé Mèo Con: Random cao, logic yếu
+    if (computerDifficulty === '5' && Math.random() < 0.6) {
         return getRandomCell(emptyCells);
     }
 
     for (const cell of emptyCells) {
         const index = parseInt(cell.dataset.index);
         
-        let attackScore = evaluatePosition(index, 'x');
-        
-        let defenseScore = evaluatePosition(index, 'o');
+        let attackScore = evaluatePosition(index, 'x');   // Computer tấn công
+        let defenseScore = evaluatePosition(index, 'o');  // Chặn player
         
         let totalScore;
+        
         if (computerDifficulty === '5') {
-            totalScore = attackScore * 0.8 + defenseScore * 1.2;
-        } else if (computerDifficulty === '8') {
-            totalScore = attackScore * 1.2 + defenseScore;
-        } else if (computerDifficulty === '20') {
-            totalScore = attackScore * 1.5 + defenseScore * 1.5;
+            // Bé Mèo Con: Yếu, thường phòng thủ
+            totalScore = attackScore * 0.7 + defenseScore * 1.3;
             
-            if (canCreateDoubleThreat(index, 'x')) {
-                totalScore *= 2;
+            // Bonus nhỏ cho strategic position
+            if (isStrategicPosition(index)) {
+                totalScore *= 1.1;
             }
-            if (canCreateDoubleThreat(index, 'o')) {
+            
+        } else if (computerDifficulty === '8') {
+            // Anh Cún Con: Hơi mạnh hơn, cân bằng
+            totalScore = attackScore * 1.0 + defenseScore * 1.2;
+            
+            if (isStrategicPosition(index)) {
+                totalScore *= 1.2;
+            }
+            
+        } else if (computerDifficulty === '20') {
+            // Chú Lười Lém: Khá mạnh, bắt đầu có chiến thuật
+            totalScore = attackScore * 1.3 + defenseScore * 1.4;
+            
+            // Tấn công: tạo double threat cho mình
+            if (canCreateDoubleThreat(index, 'x')) {
                 totalScore *= 1.8;
             }
-            if (isStrategicPosition(index)) {
-                totalScore *= 1.3;
+            // Phòng thủ: ngăn double threat của đối thủ  
+            if (canCreateDoubleThreat(index, 'o')) {
+                totalScore *= 1.6;
             }
-        } else if (computerDifficulty === '24') {
-            totalScore = attackScore * 2.0 + defenseScore * 1.8;
+            if (isStrategicPosition(index)) {
+                totalScore *= 1.4;
+            }
             
+        } else if (computerDifficulty === '24') {
+            // Bác Hà Mã: Mạnh, chiến thuật rõ ràng
+            totalScore = attackScore * 1.8 + defenseScore * 1.6;
+            
+            // Tấn công mạnh hơn
             if (canCreateDoubleThreat(index, 'x')) {
                 totalScore *= 2.2;
             }
+            // Phòng thủ vẫn quan trọng
             if (canCreateDoubleThreat(index, 'o')) {
-                totalScore *= 2;
+                totalScore *= 2.0;
             }
             if (isStrategicPosition(index)) {
-                totalScore *= 1.5;
+                totalScore *= 2.0;
             }
+            
         } else if (computerDifficulty === '36') {
-            // Base score với hệ số tấn công và phòng thủ cao
-            totalScore = attackScore * 2.5 + defenseScore * 2.2;
+            // Base scores: Tấn công cực mạnh, phòng thủ thông minh
+            totalScore = attackScore * 8.0 + defenseScore * 5.0;
             
-            if (canCreateDoubleThreat(index, 'x')) {
-                totalScore *= 3.0;  
-            }
-            if (canCreateDoubleThreat(index, 'o')) {
-                totalScore *= 3.0; 
-            }
-            
+            // CRITICAL THREATS - Ưu tiên tuyệt đối
             if (canCreateTripleThreat(index, 'x')) {
-                totalScore *= 4.0;  
+                totalScore *= 12.0; // Tăng mạnh hệ số tạo 3 threat
             }
             if (canCreateTripleThreat(index, 'o')) {
-                totalScore *= 3.5;  
+                totalScore *= 10.0; // Tăng mạnh hệ số chặn 3 threat
             }
             
-            // Tăng trọng số cho vị trí chiến lược
+            // DOUBLE THREATS - Ưu tiên rất cao
+            if (canCreateDoubleThreat(index, 'x')) {
+                totalScore *= 7.0; // Tăng hệ số tạo 2 threat
+            }
+            if (canCreateDoubleThreat(index, 'o')) {
+                totalScore *= 6.0; // Tăng hệ số chặn 2 threat
+            }
+            
+            // STRATEGIC POSITION - Tăng kiểm soát vị trí
             if (isStrategicPosition(index)) {
-                totalScore *= 3.0;  
+                totalScore *= 3.5;
+            }
+            
+            // COMBO BONUS - Siêu nguy hiểm
+            if (canCreateDoubleThreat(index, 'x') && canCreateTripleThreat(index, 'x')) {
+                totalScore *= 15.0; // Tăng mạnh hệ số combo
+            }
+            
+            // FORK DETECTION - Tạo nhiều hướng thắng
+            if (canCreateFork(index, 'x')) {
+                totalScore *= 8.0; // Tăng hệ số tạo fork
+            }
+            if (canCreateFork(index, 'o')) {
+                totalScore *= 7.5; // Tăng hệ số chặn fork
+            }
+            
+            // NEW: EARLY GAME STRATEGY
+            if (emptyCells.length > 80) { // Trong 20 nước đầu
+                if (isStrategicPosition(index)) {
+                    totalScore *= 2.0; // Ưu tiên chiếm vị trí chiến lược sớm
+                }
+            }
+            
+            // NEW: LATE GAME AGGRESSION
+            if (emptyCells.length < 40) { // Khi game đã qua nửa
+                totalScore *= 1.5; // Tăng độ quyết liệt
+            }
+            
+            // NEW: COUNTER ATTACK BONUS
+            if (lastHumanMove) {
+                const lastMoveIndex = parseInt(lastHumanMove.dataset.index);
+                const distance = Math.abs(index - lastMoveIndex);
+                if (distance <= 20) { // Nếu gần nước đi của người chơi
+                    totalScore *= 1.3; // Tăng khả năng phản công
+                }
             }
         }
 
@@ -1052,6 +1137,59 @@ function canCreateTripleThreat(index, symbol) {
     return threatCount >= 3;
 }
 
+function canCreateFork(index, symbol) {
+    // Kiểm tra xem có thể tạo 2+ hướng thắng cùng lúc không
+    const row = Math.floor(index / 10);
+    const col = index % 10;
+    let winningDirections = 0;
+    
+    const directions = [
+        [0, 1], [1, 0], [1, 1], [1, -1] // 4 hướng chính
+    ];
+    
+    for (const [dx, dy] of directions) {
+        let canWinThisDirection = true;
+        let symbolCount = 0;
+        
+        // Kiểm tra 5 ô liên tiếp qua vị trí này
+        for (let i = -4; i <= 4; i++) {
+            const newRow = row + dx * i;
+            const newCol = col + dy * i;
+            
+            if (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 10) {
+                const cell = cells[newRow * 10 + newCol];
+                if (cell.classList.contains(symbol)) {
+                    symbolCount++;
+                } else if (cell.classList.contains(symbol === 'x' ? 'o' : 'x')) {
+                    if (Math.abs(i) <= 2) { // Trong phạm vi 5 ô
+                        canWinThisDirection = false;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        if (canWinThisDirection && symbolCount >= 2) {
+            winningDirections++;
+        }
+
+    }
+    
+    return winningDirections >= 2;
+}
+
+function evaluateThreatLevel(index, symbol) {
+    // Đánh giá mức độ nguy hiểm của một nước đi
+    let threatLevel = 0;
+    
+    if (canCreateTripleThreat(index, symbol)) threatLevel += 1000;
+    if (canCreateDoubleThreat(index, symbol)) threatLevel += 500;
+    if (canCreateFork(index, symbol)) threatLevel += 300;
+    if (isStrategicPosition(index)) threatLevel += 100;
+    
+    return threatLevel;
+}
+
 function preloadSounds() {
     setupAudio(winSounds);
     setupAudio(loseAudios);
@@ -1137,12 +1275,42 @@ function loadPlayerInfo() {
     if (savedAvatar2) {
         document.querySelector('.player-2 .current-avatar').className = `current-avatar fa-solid ${savedAvatar2} fa-6x`;
     }
+    
+    // Cập nhật avatar sau khi load
+    updateGameAreaAvatars();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     initializeBoard();
     preloadSounds();
+    updateGameAreaAvatars();
 });
+
+function getComputerInfoByDifficulty(difficulty) {
+    let computerInfo = {
+        avatar: 'fa-cat',
+        name: "Bé Mèo Con"
+    };
+    
+    switch(difficulty) {
+        case '5':
+            computerInfo = { avatar: 'fa-cat', name: "Bé Mèo Con" };
+            break;
+        case '8':
+            computerInfo = { avatar: 'fa-dog', name: "Anh Cún Con" };
+            break;
+        case '20':
+            computerInfo = { avatar: 'fa-otter', name: "Chú Lười Lém" };
+            break;
+        case '24':
+            computerInfo = { avatar: 'fa-hippo', name: "Bác Hà Mã" };
+            break;
+        case '36':
+            computerInfo = { avatar: 'fa-dragon', name: "Cao thủ Rồng" };
+            break;
+    }
+    return computerInfo;
+}
 
 function initializeBoard() {
     for (let i = 0; i < 100; i++) {
@@ -1154,79 +1322,58 @@ function initializeBoard() {
 
     cells = document.querySelectorAll('.cell');
 
-    const buttonContainer = document.querySelector('.button-container');
-    if (buttonContainer) {
-        const difficultyControl = document.createElement('div');
-        difficultyControl.className = 'difficulty-select control-item';
-        difficultyControl.style.display = 'none';
-        difficultyControl.innerHTML = `
-            <select id="difficulty">
-                <option value="5" ${computerDifficulty === '5' ? 'selected' : ''}>Bé Mèo Con</option>
-                <option value="8" ${computerDifficulty === '8' ? 'selected' : ''}>Anh Cún Con</option>
-                <option value="20" ${computerDifficulty === '20' ? 'selected' : ''}>Chú Lười Lém</option>
-                <option value="24" ${computerDifficulty === '24' ? 'selected' : ''}>Bác Hà Mã</option>
-                <option value="36" ${computerDifficulty === '36' ? 'selected' : ''}>Cao thủ Rồng</option>
-            </select>
-        `;
-        buttonContainer.appendChild(difficultyControl);
+    // Thêm event listeners cho các nút
+    const difficultySelect = document.getElementById('difficulty');
+    const soundToggle = document.getElementById('sound-toggle');
 
-        const soundControl = document.createElement('div');
-        soundControl.className = 'sound-checkbox';
-        soundControl.style.display = 'none';
-        soundControl.innerHTML = `
-            <button id="sound-toggle" class="voice-btn ${isSoundEnabled ? 'active' : ''}">
-                <i class="fa-solid fa-microphone-lines"></i>
-            </button>
-        `;
-        buttonContainer.appendChild(soundControl);
-
-        const soundToggle = document.getElementById('sound-toggle');
-        soundToggle.addEventListener('click', function() {
-            this.classList.toggle('active');
-            const isEnabled = this.classList.contains('active');
-            localStorage.setItem('isSoundEnabled', isEnabled);
-            updateSoundArrays(isEnabled);
+    // Load độ khó từ localStorage và cập nhật UI
+    const savedDifficulty = localStorage.getItem('computerDifficulty') || '5';
+    computerDifficulty = savedDifficulty;
+    difficultySelect.value = savedDifficulty;
+    
+    // Cập nhật tên và avatar dựa trên độ khó đã lưu
+    const computerInfo = getComputerInfoByDifficulty(savedDifficulty);
+    if (isComputerMode) {
+        document.querySelector('.player-1 .current-avatar').className = `current-avatar fa-solid ${computerInfo.avatar} fa-6x`;
+        player1NameInput.value = computerInfo.name;
+        
+        // Cập nhật options trong listbox
+        Array.from(difficultySelect.options).forEach(option => {
+            const optionInfo = getComputerInfoByDifficulty(option.value);
+            option.textContent = optionInfo.name;
         });
+    }
 
-        const difficultySelect = document.getElementById('difficulty');
-        difficultySelect.addEventListener('change', function() {
-            computerDifficulty = this.value;
-            localStorage.setItem('computerDifficulty', this.value);
+    difficultySelect.addEventListener('change', function() {
+        computerDifficulty = this.value;
+        localStorage.setItem('computerDifficulty', this.value);
+        
+        if (isComputerMode) {
+            const computerInfo = getComputerInfoByDifficulty(this.value);
+            document.querySelector('.player-1 .current-avatar').className = `current-avatar fa-solid ${computerInfo.avatar} fa-6x`;
+            player1NameInput.value = computerInfo.name;
+            updateGameAreaAvatars();
             
-            if (isComputerMode) {
-                let computerAvatar;
-                let computerName;
-                switch(this.value) {
-                    case '5':
-                        computerAvatar = 'fa-cat';
-                        computerName = "Bé Mèo Con";
-                        break;
-                    case '8':
-                        computerAvatar = 'fa-dog';
-                        computerName = "Anh Cún Con";
-                        break;
-                    case '20':
-                        computerAvatar = 'fa-otter';
-                        computerName = "Chú Lười Lém";
-                        break;
-                    case '24':
-                        computerAvatar = 'fa-hippo';
-                        computerName = "Bác Hà Mã";
-                        break;
-                    case '36':
-                        computerAvatar = 'fa-dragon';
-                        computerName = "Cao thủ Rồng";
-                        break;
-                    default:
-                        computerAvatar = 'fa-cat';
-                        computerName = "Bé Mèo Con";
-                }
-                document.querySelector('.player-1 .current-avatar').className = `current-avatar fa-solid ${computerAvatar} fa-6x`;
-                player1NameInput.value = computerName;
+            // Cập nhật tên trong listbox
+            const difficultyOptions = document.getElementById('difficulty').options;
+            for (let option of difficultyOptions) {
+                const optionInfo = getComputerInfoByDifficulty(option.value);
+                option.textContent = optionInfo.name;
             }
-        });
+            updateTurnInfo();
+        }
+    });
 
-        updateSoundArrays(isSoundEnabled);
+    soundToggle.addEventListener('click', function() {
+        this.classList.toggle('active');
+        const isEnabled = this.classList.contains('active');
+        localStorage.setItem('isSoundEnabled', isEnabled);
+        updateSoundArrays(isEnabled);
+    });
+
+    // Khởi tạo trạng thái âm thanh
+    if (isSoundEnabled) {
+        soundToggle.classList.add('active');
     }
 
     loadPlayerInfo();
@@ -1268,4 +1415,115 @@ function playMoveSound() {
     if (!gameActive || !isSoundEnabled) return;
     const randomSound = moveSounds[Math.floor(Math.random() * moveSounds.length)];
     playAudioSafely(randomSound);
+}
+
+// Thêm hàm để cập nhật avatar ban đầu
+function updateGameAreaAvatars() {
+    const gameArea = document.querySelector('.game-area');
+    const player1Avatar = document.querySelector('.player-1 .current-avatar').className.split(' ')[2];
+    const player2Avatar = document.querySelector('.player-2 .current-avatar').className.split(' ')[2];
+    
+    // Xóa tất cả các class avatar cũ
+    const oldClasses = Array.from(gameArea.classList).filter(c => c.startsWith('fa-'));
+    oldClasses.forEach(c => gameArea.classList.remove(c));
+    
+    // Thêm class avatar mới cho cả hai người chơi
+    if (player1Avatar) {
+        gameArea.classList.add(player1Avatar); // Avatar cho game-area::before
+    }
+    if (player2Avatar) {
+        gameArea.classList.add(player2Avatar + '-2'); // Avatar cho game-area::after
+    }
+}
+
+// Cập nhật hàm updatePlayerName để đồng bộ với listbox
+function updatePlayerName(player, newName) {
+    if (player === 1) {
+        player1Name = newName;
+        document.querySelector('.player1-avatar .player-name').textContent = newName;
+        // Cập nhật options trong listbox
+        const difficultySelect = document.getElementById('difficulty-select');
+        Array.from(difficultySelect.options).forEach(option => {
+            if (option.value.includes('Dễ')) {
+                option.text = `${newName} (Dễ)`;
+            } else if (option.value.includes('Vừa')) {
+                option.text = `${newName} (Vừa)`;
+            } else if (option.value.includes('Khó')) {
+                option.text = `${newName} (Khó)`;
+            }
+        });
+        localStorage.setItem(STORAGE_KEYS.PLAYER1_NAME, newName);
+    } else {
+        player2Name = newName;
+        document.querySelector('.player2-avatar .player-name').textContent = newName;
+        localStorage.setItem(STORAGE_KEYS.PLAYER2_NAME, newName);
+    }
+    updateTurnInfo();
+}
+
+// Thêm hàm khởi tạo tên ban đầu cho score labels
+function initializeScoreLabels() {
+    document.getElementById('score-label-1').textContent = player1Name;
+    document.getElementById('score-label-2').textContent = player2Name;
+}
+
+// Cập nhật hàm initGame để load độ khó và tên người chơi từ localStorage
+function initGame() {
+    // Load saved names
+    const savedPlayer1Name = localStorage.getItem(STORAGE_KEYS.PLAYER1_NAME);
+    const savedPlayer2Name = localStorage.getItem(STORAGE_KEYS.PLAYER2_NAME);
+    
+    if (savedPlayer1Name) {
+        updatePlayerName(1, savedPlayer1Name);
+    }
+    if (savedPlayer2Name) {
+        updatePlayerName(2, savedPlayer2Name);
+    }
+
+    // Load saved difficulty
+    const difficultySelect = document.getElementById('difficulty-select');
+    const savedDifficulty = localStorage.getItem(STORAGE_KEYS.DIFFICULTY);
+    
+    if (savedDifficulty) {
+        difficultySelect.value = savedDifficulty;
+    }
+
+    // Cập nhật options trong listbox với tên người chơi hiện tại
+    Array.from(difficultySelect.options).forEach(option => {
+        if (option.value.includes('Dễ')) {
+            option.text = `${player1Name} (Dễ)`;
+        } else if (option.value.includes('Vừa')) {
+            option.text = `${player1Name} (Vừa)`;
+        } else if (option.value.includes('Khó')) {
+            option.text = `${player1Name} (Khó)`;
+        }
+    });
+
+    // Thêm event listener để lưu độ khó khi thay đổi
+    difficultySelect.addEventListener('change', function() {
+        localStorage.setItem(STORAGE_KEYS.DIFFICULTY, this.value);
+    });
+
+    // Hiển thị/ẩn nút voice dựa trên chế độ chơi
+    const voiceButton = document.getElementById('voice-button');
+    voiceButton.style.display = isComputerMode ? 'block' : 'none';
+    
+    resetGame();
+}
+
+function toggleGameMode() {
+    isComputerMode = !isComputerMode;
+    const difficultySelect = document.getElementById('difficulty-select');
+    const voiceButton = document.getElementById('voice-button');
+    
+    if (isComputerMode) {
+        difficultySelect.style.display = 'block';
+        voiceButton.style.display = 'block';
+        // ... existing code ...
+    } else {
+        difficultySelect.style.display = 'none';
+        voiceButton.style.display = 'none';
+        // ... existing code ...
+    }
+    resetGame();
 } 

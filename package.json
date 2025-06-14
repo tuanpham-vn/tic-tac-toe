@@ -1,8 +1,0 @@
-{
-  "name": "tic-tac-toe",
-  "version": "1.0.0",
-  "description": "Tic Tac Toe game with sound",
-  "scripts": {
-    "start": "npx http-server -p 8000 --cors"
-  }
-} 
