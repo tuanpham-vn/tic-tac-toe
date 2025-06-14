@@ -899,30 +899,24 @@ function findBestMove() {
             // Base score với hệ số tấn công và phòng thủ cao
             totalScore = attackScore * 2.5 + defenseScore * 2.2;
             
-            // Xử lý double threat cho cả tấn công và phòng thủ
             if (canCreateDoubleThreat(index, 'x')) {
-                totalScore *= 3.0;  // Tăng hệ số tấn công
+                totalScore *= 3.0;  
             }
             if (canCreateDoubleThreat(index, 'o')) {
-                totalScore *= 2.8;  // Tăng hệ số phòng thủ
+                totalScore *= 3.0; 
             }
             
-            // Xử lý triple threat - ưu tiên cao nhất
             if (canCreateTripleThreat(index, 'x')) {
-                totalScore *= 4.0;  // Tăng mạnh cho triple threat tấn công
+                totalScore *= 4.0;  
             }
             if (canCreateTripleThreat(index, 'o')) {
-                totalScore *= 3.5;  // Tăng mạnh cho triple threat phòng thủ
+                totalScore *= 3.5;  
             }
             
             // Tăng trọng số cho vị trí chiến lược
             if (isStrategicPosition(index)) {
-                totalScore *= 2.5;  // Tăng độ ưu tiên vị trí chiến lược
+                totalScore *= 3.0;  
             }
-            
-            // Biên độ ngẫu nhiên xuống (±1%) 
-            const randomFactor = 0.99 + Math.random() * 0.1; // Random từ 0.95 đến 1.05
-            totalScore *= randomFactor;
         }
 
         if (totalScore > bestScore) {
